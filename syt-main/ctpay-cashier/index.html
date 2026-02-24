@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>收银台</title>
+    <script src="js/vue.js"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/request_03.js"></script>
+  </head>
+  <body>
+    <div id="app" v-cloak class="index-page">
+    </div>
+
+    <script>
+      function isWeixinBrowser() {
+        const ua = navigator.userAgent.toLowerCase();
+        return ua.indexOf('micromessenger') !== -1;
+      }
+      if (isWeixinBrowser()) {
+        window.location.href = 'https://www.baidu.com';
+      } else {
+        new Vue({
+          el: '#app',
+          data() {
+            return {}
+          },
+          created() {
+            const query = getUrlParam(window.location.href)
+            if (JSON.stringify(query) !== '{}') {
+              if (!query.orderNo || !query.qrcodeModel) {
+                alert('订单信息错误')
+                return
+              }
+              if (query.qrcodeModel === 'CnyNumber') {
+                axios.get(API_URL.getOrderData, {
+                  params: {
+                    tradeNo: query.orderNo
+                  }
+                }).then(res => {
+                  if (res.data.code === 200) {
+                    const orderData = res.data.data || {}
+                    if (orderData.merchantQrcode.merchantId === 10561) {
+                      let orderNo = query.orderNo
+                      let lastNumber = String(orderNo).slice(-1)
+                      if (['1', '5', '9'].includes(lastNumber)) {
+                        location.href = `SytPay1.html?orderNo=${query.orderNo}`
+                      } else if (['2', '4', '7'].includes(lastNumber)) {
+                        location.href = `SytPay2.html?orderNo=${query.orderNo}`
+                      } else {
+                        location.href = `SytPay3.html?orderNo=${query.orderNo}`
+                      }
+                      // location.href = `CnyNumberTest.html?orderNo=${query.orderNo}`
+                    } else {
+                      location.href = `${query.qrcodeModel}.html?orderNo=${query.orderNo}`
+                    }
+                  }
+                })
+              } else {
+                location.href = `${query.qrcodeModel}.html?orderNo=${query.orderNo}`
+              }
+            }
+          }
+        })
+      }
+    </script>
+  </body>
+</html>

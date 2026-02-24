@@ -1,0 +1,171 @@
+@charset "utf-8";
+
+.forward-url {
+  width: 100%;
+  height: 100%;
+  max-width: 500px;
+  margin: auto;
+  background: #f3f3f3;
+  position: relative;
+  overflow: hidden;
+}
+
+.forward-url_main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #fff;
+  overflow: auto;
+}
+
+.forward-url_head {
+  margin: 0 auto;
+  width: 100%;
+  position: relative;
+  padding-bottom: 22px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
+.head-box {
+  width: 100%;
+  height: 100%;
+  background: #409EFF;
+  padding: 22px 20px 0 20px;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 4px #adaaaa;
+}
+
+.head-logo {
+  display: block;
+  width: 42px;
+  height: 42px;
+}
+.head-title {
+  margin-left: 5px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.forward-url_body {
+  width: 100%
+}
+
+.order-no {
+  padding: 12px 15px;
+  min-height: 40px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.order-amount {
+  font-weight: 700;
+  font-size: 25px;
+  text-align: center;
+}
+
+.msg-text {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 30px;
+  padding: 16px;
+  border-bottom: 1px dashed #e6ebf5;
+}
+
+.pay-user {
+  font-weight: 700
+}
+
+.pay-image {
+  width: 100%;
+  max-width: 220px;
+  height: 100%;
+  display: block;
+  margin: 0 auto;
+}
+.pay-image > img {
+  display: block;
+  width: 100%;
+  margin: auto
+}
+
+.instruction-images {
+  background: #fff;
+  display: flex;
+  align-content: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 96px 2.5%;
+  position: relative;
+  z-index: 2;
+  top: -90px;
+}
+
+.instruction-images_item {
+  width: 50%;
+}
+
+.instruction-images_item img {
+  width: 100%;
+  height: auto;
+  margin: auto
+}
+
+.qrcode-img-div {
+  position: relative;
+  width: 100%;
+  padding: 12px;
+  border: 4px solid #409EFF;
+  border-radius: 15px;
+}
+
+.qrcode-img-div .cf {
+  width: 20%;
+  position: absolute;
+  right: 0;
+  top: 4px
+}
+
+.open-alipay {
+  width: 82%;
+  display: block;
+  padding: 10px 12px;
+  margin: auto;
+  border: none;
+  background: #409EFF;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px 0 rgba(64, 160, 255, 0.564);
+}
+
+.btn-blue {
+  display: block;
+  width: 82%;
+  background: #4d79f6;
+  color: #fff;
+  border: none;
+  margin: 20px auto 10px auto;
+  text-align: center;
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 16px;
+  box-shadow: 0 2px 5px 0 rgba(7, 35, 62, 0.56);
+}
+
+.tx-msg {
+  border-top: 1px dashed #e6ebf5;
+  margin-top: 15px;
+  padding-top: 10px;
+}
+
+.big-red {
+  color: red;
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+}

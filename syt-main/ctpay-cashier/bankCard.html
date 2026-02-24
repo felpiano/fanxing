@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="renderer" content="webkit">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>銀行卡收銀台‌</title>
+  <script>
+    const randomNum = Math.random().toString(36).substring(7);
+    document.write('<link rel="stylesheet" href="css/index.css?v=' + randomNum + '">');
+    document.write('<link rel="stylesheet" href="css/bankCard.css?v=' + randomNum + '">');
+  </script>
+  <script src="js/vue.js"></script>
+  <script src="js/axios.min.js"></script>
+  <script src="js/request_03.js"></script>
+  <script src="js/jquery.js"></script>
+  <script src="js/clipboard.min.js"></script>
+  <script src="js/jquery.qrcode.min.js"></script>
+
+</head>
+<body>
+<div id="app" v-cloak class="union-pay">
+  <div v-if="orderInfo.orderStatus == -1"></div>
+  <div class="union-pay_body" v-else-if="orderInfo.orderStatus === 0">
+    <div class="flex-center count-dowm">
+      请在{{countDown.m}}分{{countDown.s}}秒内按照以下订单完成转账
+    </div>
+    <p class="union-pay_sub">为了快速到账，请按订单金额转账</p>
+    <div class="union-pay-card">
+      <div class="order-no text-center">{{orderInfo.tradeNo}}</div>
+      <p class="order-amount fixedAmount" :data-clipboard-text="orderInfo.fixedAmount"  @click="clipboard('fixedAmount', '金额')">
+        ￥{{orderInfo.fixedAmount}}
+      </p>
+      <p class="red-line">转账完成后请您截图转账凭证上传,服务商才能更快核实</p>
+      <p class="red-line">修改金额或重复支付不会到账</p>
+      <p class="red-line" v-if="orderInfo.guidance">
+        {{orderInfo.guidance}}
+      </p>
+      <div class="flex-between fixedAmount line" :data-clipboard-text="orderInfo.fixedAmount"  @click="clipboard('fixedAmount', '金额')">
+        <p>金额：{{orderInfo.fixedAmount}}</p>
+        <button class="clipboard-btn">复制</button>
+      </div>
+      <div class="flex-between nickName line" :data-clipboard-text="orderInfo.nickName"  @click="clipboard('nickName', '姓名')">
+        <p>姓名：{{orderInfo.nickName}}</p>
+        <button class="clipboard-btn">复制</button>
+      </div>
+      <div class="flex-between accountNumber line" :data-clipboard-text="orderInfo.accountNumber"  @click="clipboard('accountNumber', '卡號')">
+        <p>卡號：{{orderInfo.accountNumber}}</p>
+        <button class="clipboard-btn">复制</button>
+      </div>
+      <div class="flex-between uid line" :data-clipboard-text="orderInfo.uid"  @click="clipboard('uid', '開戶銀行')">
+        <p>開戶銀行：{{orderInfo.uid}}</p>
+        <button class="clipboard-btn">复制</button>
+      </div>
+      <div class="flex-between accountRemark line" :data-clipboard-text="orderInfo.accountRemark"  @click="clipboard('accountRemark', '開戶支行')">
+        <p>開戶支行：{{orderInfo.accountRemark}}</p>
+        <button class="clipboard-btn">复制</button>
+      </div>
+      <label class="btn-blue" style="position: relative;">
+        上传回单/凭证
+        <input
+          type="file"
+          id="fileInput"
+          accept="image/*"
+          @change="handleUpload"
+          style="opacity: 0; position: absolute; left: 0; top: 0; width: 160px; height: 42px; z-index: 10;"
+        />
+      </label>
+      <!--<div id="alipayQrcode">
+        <div class="pay-image" id="qrcodeUrl">
+          <img :src="orderInfo.qrcodeUrl" alt=""/>
+        </div>
+        <div class="qrcode-img-div" id="qrcode">
+          <div class="qrcode_img"></div>
+          <img class="cf" src="./images/173.png"/>
+        </div>
+      </div>-->
+      <div class="red">
+        <b style="font-size: 24px">重要提示：</b>
+        <b style="color:green">需使用手機銀行app</b>
+        <b>轉到以上卡號，正確填寫金額，都會立刻到賬</b>
+      </div>
+      <p style="font-size:14px; line-height:24px; font-weight: 700; margin-top: 8px">
+        <span class="red">示例</span><br>
+        <span class="red">銀行卡:</span><br>
+        <span>打開手機銀行app或網銀-轉賬-複製銀行卡信息完成轉賬</span><br>
+      </p>
+    </div>
+  </div>
+  <div v-else>
+    <p class="order-suc" v-if="orderInfo.orderStatus === 1">订单已经支付成功了噢～</p>
+    <p class="order-over" v-else-if="orderInfo.orderStatus === 2">
+      当前订单已超时!<br/>
+      如果你还没有付款, 重新创建新的订单即可~
+    </p>
+  </div>
+
+
+  <div class="dialog-div" v-if="isVisible">
+    <div class="dialog-div_box">
+      <div class="dialog-div_body font-weight">
+        <p class="dialog-title"> 请输入付款人姓名 </p>
+        <p class="red font-16 text-center"> 请正确填写付款人的真实姓名 </p>
+        <input type="text" maxlength="6" v-model="payer" class="input-userName" placeholder="请输入付款人姓名">
+      </div>
+      <div class="dialog-div_footer">
+        <button class="btn-primary" @click="submitOrder">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!--loading-->
+  <div class="dialog-div modal-loading" v-show="loading">
+    <div>
+      <img src="images/loading.gif" alt="">
+      <p>正在加载中...</p>
+    </div>
+  </div>
+
+  <!--toast-->
+  <div class="toast" v-show="toastShow">
+    <p>{{ toastText }}</p>
+  </div>
+</div>
+</body>
+<script>
+  new Vue({
+    el: '#app',
+    data(){
+      return {
+        loading: true,
+        toastText: '',
+        toastShow: false,
+        isVisible: false,
+        orderInfo: {
+          uid: '',
+          tradeNo: '',
+          fixedAmount: 0,
+          guidance: '',
+          nickName: '',
+          accountNumber: '',
+          qrcodeType: 1,
+          hideQrcode: 1,
+          showChannel: 0,
+          qrcodeUrl: '',
+          orderStatus: -1
+        },
+        payer: '',
+        countDown: {
+          m: 0,
+          s: 0
+        }
+      }
+    },
+    created() {
+      const query = getUrlParam(window.location.href)
+      if (JSON.stringify(query) !== '{}') {
+        this.getOrderInfo(query)
+      } else {
+        this.loading = false
+      }
+    },
+    methods: {
+      getOrderInfo(query) {
+        if(!query.orderNo) {
+          this.loading = false
+          return
+        }
+        axios.get(API_URL.getOrderData, {
+          params: {
+            tradeNo: query.orderNo
+          }
+        }).then(res => {
+          if (res.status === 200) {
+            if (res.data.code !== 200) {
+              this.loading = false
+              this.setToast(res.data.msg)
+              return
+            }
+            const orderData = res.data.data || {}
+            if (JSON.stringify(orderData) === '{}') {
+              this.setToast('获取订单信息失败')
+              this.loading = false
+              return
+            }
+            this.loading = false
+            if (orderData.orderStatus !== 0 ) {
+              this.orderInfo.orderStatus = orderData.orderStatus
+              return
+            }
+            const merchantQrcode = orderData.merchantQrcode || {}
+            if (JSON.stringify(merchantQrcode) === '{}') {
+              this.setToast('通道码异常，请重新下单～')
+              return
+            }
+            this.countDownFun(orderData)
+
+            const agentChannel = orderData.agentChannel || {}
+
+            if (agentChannel.payurlUser === 0) {
+              this.isVisible = orderData.memberNameFlag === 0
+            } else {
+              this.isVisible = false
+            }
+
+            this.orderInfo = {
+              uid: merchantQrcode.uid,
+              tradeNo: orderData.tradeNo,
+              fixedAmount: orderData.fixedAmount,
+              guidance: agentChannel.guidance,
+              nickName: merchantQrcode.nickName,
+              accountNumber: merchantQrcode.accountNumber,
+              accountRemark: merchantQrcode.accountRemark,
+              qrcodeUrl: merchantQrcode.qrcodeUrl,
+              showChannel: agentChannel.showChannel,
+              orderStatus: orderData.orderStatus
+            }
+
+          } else {
+            this.setToast('获取订单信息失败')
+          }
+        }).catch(() => {
+          this.setToast('获取订单信息失败')
+        })
+      },
+      countDownFun(data) {
+        // 倒计时
+        const orderTime = new Date(data.orderTime.replace(/-/g, '/')).getTime()
+        const nowTime = new Date().getTime()
+        let countDownTime = (data.overtime * 60 * 1000) - (nowTime - orderTime)
+        const timer = setInterval(() => {
+          if (countDownTime <= 0) {
+            clearInterval(timer)
+            return
+          }
+          this.countDown.m = Math.floor(countDownTime / 1000 / 60)
+          this.countDown.s = Math.floor(countDownTime / 1000 % 60)
+          countDownTime -= 1000
+        }, 1000)
+      },
+      submitOrder() {
+        if (!this.payer) {
+          this.setToast('请输入付款人姓名')
+          return
+        }
+        if (!/^[\u4e00-\u9fa5]+$/.test(this.payer)) {
+          this.setToast('付款人姓名只能输入中文噢～')
+          return
+        }
+        this.setToast('提交中,请稍等...')
+        axios.get(API_URL.setOrderPayer, {
+          params: {
+            tradeNo: this.orderInfo.tradeNo,
+            payer: this.payer
+          }
+        }).then(res => {
+          if (res.status === 200) {
+            if (res.data.code !== 200) {
+              this.setToast(res.data.msg)
+              return
+            }
+            this.isVisible = false
+          } else {
+            this.setToast('提交失败')
+          }
+        }).catch(() => {
+          this.setToast('提交失败')
+        })
+      },
+      handleClick(item) {
+        let u = navigator.userAgent;
+        // let isAndroid = u.indexOf('Android') > -1 || u.indexOf('Adr') > -1;
+        let isIOS = !!u.match(/\(i[^;]+;( U;)? CPU.+Mac OS X/);
+        if (isIOS) {
+          window.location.href = item.iosUrl
+        } else {
+          window.location.href = item.url
+        }
+      },
+      clipboard(className, text) {
+        let clipboard = new ClipboardJS('.' + className);
+        clipboard.on('success', (e) => {
+          this.setToast(text + '复制成功')
+        });
+        clipboard.on('error', (e) => {
+          this.setToast(text + '复制失败')
+        });
+      },
+      setToast(text) {
+        this.toastText = text
+        this.toastShow = true
+        setTimeout(() => {
+          this.toastShow = false
+        }, 2000)
+      },
+      handleUpload() {
+        if (!this.orderInfo.tradeNo) {
+          this.setToast('订单号缺失')
+          return;
+        }
+        const file = $('#fileInput')[0].files[0]
+        if (!file) {
+          this.setToast('请选择回单/凭证')
+          return;
+        }
+        this.loading = true
+        const formData = new FormData();
+        formData.append('file', file);
+        axios({
+          url: API_URL.upload,
+          data: formData,
+          method: 'POST',
+          processData: false,
+          contentType: false
+        }).then(res => {
+          if (res.status === 200) {
+            axios.get(API_URL.ploadReceiptImg, {
+              params: {
+                receiptImg: res.data.url,
+                tradeNo: this.orderInfo.tradeNo,
+              }
+            }).then(res => {
+              this.setToast('上传成功')
+            }).finally(() => {
+              this.loading = false
+            })
+          }
+        })
+      }
+    }
+  })
+</script>
+</html>

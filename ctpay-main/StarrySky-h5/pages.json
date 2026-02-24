@@ -1,0 +1,152 @@
+{
+	"pages": [ //pages数组中第一项表示应用启动页，参考：https://uniapp.dcloud.io/collocation/pages
+		{
+			"path" : "pages/order/order",
+			"style" : 
+			{
+				"navigationBarTitleText" : "订单"
+			}
+		},
+		{
+			"path": "pages/home/index",
+			"style": {
+				"navigationBarTitleText": "uni-app"
+			}
+		},
+		{
+			"path" : "pages/my/setSafeCode",
+			"style" : 
+			{
+				"navigationStyle": "custom",
+				"navigationBarTitleText" : "设置安全码"
+			}
+		},
+		{
+			"path" : "pages/my/updatePassword",
+			"style" : 
+			{
+				"navigationBarTitleText" : "修改密码"
+			}
+		},
+		{
+			"path" : "pages/home/middle",
+			"style" : 
+			{
+				"navigationBarTitleText" : "绑定谷歌验证码"
+			}
+		},
+		{
+			"path" : "pages/login",
+			"style" : 
+			{
+				"navigationStyle": "custom",
+				"navigationBarTitleText" : "登录"
+			}
+		},
+		{
+			"path" : "pages/404/404",
+			"style" : 
+			{
+				"navigationBarTitleText" : "404"
+			}
+		},
+		{
+			"path" : "pages/my/my",
+			"style" : 
+			{
+				"navigationBarTitleText" : "我的"
+			}
+		},
+		{
+			"path" : "pages/my/channelInfo",
+			"style" : 
+			{
+				"navigationBarTitleText" : "通道费率"
+			}
+		},
+		{
+			"path" : "pages/my/amountRecords",
+			"style" : 
+			{
+				"navigationBarTitleText" : "资金明细"
+			}
+		},
+		{
+			"path" : "pages/channelCode/channelCode",
+			"style" : 
+			{
+				"navigationStyle": "custom",
+				"navigationBarTitleText" : "通道码"
+			}
+		},
+		{
+			"path" : "pages/channelCode/updateCode",
+			"style" : 
+			{
+				"navigationBarTitleText" : "新增通道码"
+			}
+		},
+		{
+			"path" : "pages/report/report",
+			"style" : 
+			{
+				"navigationBarTitleText" : "对账报表"
+			}
+		},
+		{
+			"path" : "pages/subordinateManage/index",
+			"style" : 
+			{
+				"navigationStyle": "custom",
+				"navigationBarTitleText" : "下级管理"
+			}
+		},
+		{
+			"path" : "pages/subordinateManage/basicConfigRate",
+			"style" : 
+			{
+				"navigationBarTitleText" : "设置费率"
+			}
+		}
+	],
+	"globalStyle": {
+		"navigationBarTextStyle": "black",
+		"navigationBarTitleText": "uni-app",
+		"navigationBarBackgroundColor": "#fff",
+		"backgroundColor": "#fff"
+	},
+	"uniIdRouter": {},
+	"tabBar": {
+	    "color": "#707070",
+	    "selectedColor": "#043462",
+	    "borderStyle": "black",
+	    "backgroundColor": "#ffffff",
+	    "iconWidth": "24px",
+	    "list": [
+				{
+					"pagePath": "pages/order/order",
+					"iconPath": "static/order.png",
+					"selectedIconPath": "static/order_active.png",
+					"text": "订单"
+				},
+				{
+					"pagePath": "pages/channelCode/channelCode",
+					"iconPath": "static/code.png",
+					"selectedIconPath": "static/code_active.png",
+					"text": "通道码"
+				},
+				{
+					"pagePath": "pages/my/amountRecords",
+					"iconPath": "static/amount.png",
+					"selectedIconPath": "static/amount_active.png",
+					"text": "资金明细"
+				},
+				{
+					"pagePath": "pages/my/my",
+					"iconPath": "static/my.png",
+					"selectedIconPath": "static/my_active.png",
+					"text": "我的"
+				}
+		]
+	}
+}

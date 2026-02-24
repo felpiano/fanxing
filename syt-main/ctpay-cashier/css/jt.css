@@ -1,0 +1,254 @@
+@charset "utf-8";
+
+body {
+  height: 100%;
+  width: 100%;
+  background: #f3f3f3;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family: Microsoft YaHei, Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Arial, sans-serif;
+  font-size: 14px;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+/***解决页面闪烁问题***/
+[v-cloak] {
+  display: none !important;
+}
+
+.flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flex-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 13px;
+  z-index: 9999;
+}
+
+.dialog-div {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.dialog-div_box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -70%);
+  background: #fff;
+  border-radius: 5px;
+  width: 88%;
+  max-width: 500px;
+  font-size: 14px;
+  word-break: break-all;
+}
+
+.dialog-div_body {
+  padding: 30px 20px;
+  color: #606266;
+}
+
+.dialog-title {
+  text-align: center;
+  font-size: 24px;
+  color:#000000;
+  line-height: 48px
+}
+
+.input-userName {
+  display: block  ;
+  height: 38px;
+  width: 268px;
+  border-radius: 2px;
+  text-align:center;
+  border: 1px solid #bcb4b4;
+  margin: 12px auto auto;
+}
+
+.btn-primary {
+  width: 100%;
+  height: 50px;
+  line-height: 50px;
+  font-size: 18px;
+  border: none;
+  background-color: #1b76fc;
+  color: #fff;
+  border-radius: 4px
+}
+
+.dialog-div_footer {
+  width: 100%;
+}
+
+/**********loading加载弹框*************/
+.modal-loading > div {
+  background: #333;
+  width: 85px;
+  padding: 6px 0 9px 0;
+  border-radius: 4px;
+  margin: 30% auto
+}
+
+.modal-loading > div > img {
+  display: block;
+  margin: auto;
+  width: 38px;
+  height: 38px
+}
+
+.modal-loading > div > p {
+  font-size: 12px;
+  color: #fff;
+  text-align: center
+}
+
+.copy-text {
+  background: #1890ff;
+  color: #fff;
+  vertical-align: bottom;
+  margin-left: 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border: none;
+  padding: 2px 8px;
+  border-radius: 2px;
+  box-shadow: 0 2px 3px #1e7bd1;
+}
+.text-center {
+  text-align: center;
+}
+
+.mb-15 {
+  margin-bottom: 10px;
+}
+
+
+.zfbjt-page {
+  position: relative;
+  background: #fff;
+  width: 100%;
+  height: 100%;
+  min-width: 320px;
+  max-width: 500px;
+  padding: 20px 30px;
+  overflow-y: auto
+}
+.zfbjt-page-main {
+  width: 100%;
+  height: 100%;
+  position: relative;
+
+}
+
+.order-over {
+  padding: 15% 40px
+}
+.order-end-icon {
+  text-align: center;
+  margin-bottom: 15px
+}
+
+.alipay-logo {
+  margin-bottom: 15px
+}
+
+.alipay-logo-img {
+  display: block;
+  width: 120px;
+  margin: 0 auto;
+}
+
+.order-no {
+  color: #6c6a6a;
+  font-size: 15px;
+  padding-bottom: 15px;
+  font-weight: bold;
+}
+
+.count-dowm {
+  color: #434040;
+  font-size: 14px;
+  padding: 10px 0
+}
+.red-msg {
+  color: red;
+  font-size: 14px;
+  padding: 14px 0 20px 0
+}
+
+.zfbjt-msg {
+  text-align:center;
+  color:#000;
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 700;
+  padding-bottom: 20px
+}
+
+.link-btn {
+  background: #1b76fc;
+  color: #ffffff;
+  border: none;
+  font-size: 16px;
+  height: 34px;
+  line-height:34px;
+  width: 100%;
+  margin: 0 auto;
+  border-radius: 4px;
+}
+
+.red-msg-2 {
+  text-align:center;
+  color: red;
+  font-size: 16px;
+  line-height: 26px;
+  font-weight: 700;
+}
+
+.zfbjt-img-rm {
+  width: 100%;
+  padding: 10px 20px
+}
+.zfbjt-img-rm > img {
+  display: block;
+  width: 100%;
+  margin: 0 auto;
+}
+

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="renderer" content="webkit">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>微信扫码收银台</title>
+  <script>
+    const randomNum = Math.random().toString(36).substring(7);
+    document.write('<link rel="stylesheet" href="css/index.css?v=' + randomNum + '">');
+    document.write('<link rel="stylesheet" href="css/wechat.css?v=' + randomNum + '">');
+  </script>
+  <script src="js/vue.js"></script>
+  <script src="js/axios.min.js"></script>
+  <script src="js/request_03.js"></script>
+  <script src="js/jquery.js"></script>
+  <script src="js/jquery.qrcode.min.js"></script>
+</head>
+<body>
+<div id="app" v-cloak class="forward-url">
+  <div v-if="orderInfo.orderStatus == -1"></div>
+  <div class="forward-url_main" v-else-if="orderInfo.orderStatus === 0">
+    <div class="forward-url_head">
+      <div class="head-box">
+        <div class="flex-center" v-if="orderInfo.showChannel === 0">
+          <svg t="1733124656876" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="4107" width="48" height="48"><path d="M512 1024a512 512 0 1 1 512-512 512 512 0 0 1-512 512z m-112.523636-836.538182c-144.989091 0-262.516364 100.538182-262.516364 224.465455 0 74.007273 42.123636 139.636364 106.705455 180.363636l-19.549091 78.312727 86.807272-47.592727a301.265455 301.265455 0 0 0 88.669091 13.381818h2.210909a178.967273 178.967273 0 0 1-3.607272-34.909091c0-115.083636 109.498182-208.407273 244.363636-208.407272 6.167273 0 11.636364 0 18.152727 0.814545-10.589091-115.665455-123.461818-206.778182-261.469091-206.778182z m246.690909 226.443637c-124.741818 0-225.861818 86.109091-225.861818 192.465454s101.003636 192.349091 225.861818 192.349091a257.047273 257.047273 0 0 0 99.723636-20.014545l77.265455 40.610909L802.909091 744.727273a179.316364 179.316364 0 0 0 69.003636-138.24c0-106.24-101.12-192.465455-225.861818-192.465455z m81.454545 152.087272a31.767273 31.767273 0 1 1 32.349091-31.767272 32 32 0 0 1-32.349091 31.767272z m-164.072727 0a31.767273 31.767273 0 1 1 32.349091-31.767272 32 32 0 0 1-32.349091 31.767272zM502.341818 373.527273a34.909091 34.909091 0 1 1 34.909091-34.909091 34.909091 34.909091 0 0 1-34.909091 34.909091z m-206.196363 0a34.909091 34.909091 0 1 1 34.90909-34.909091 34.909091 34.909091 0 0 1-34.90909 34.909091z m0 0" fill="#1FBE2A" p-id="4108"></path></svg>
+          <div class="head-title">
+            <p>微信支付</p>
+            <p style="font-size: 13px">WeChat Pay</p>
+          </div>
+        </div>
+        <div class="flex-center order-no">
+          <p>{{orderInfo.tradeNo}}</p>
+          <button class="copy-text" @click="clipboard(orderInfo.tradeNo, '订单号')">复制</button>
+        </div>
+      </div>
+      <div class="order-info">
+        <!-- <div class="flex-center pay-user" v-if="orderInfo.nickName && orderInfo.nickName !== ''">
+          真实姓名：
+          <p class="nick-name">{{orderInfo.nickName}} </p>
+          <button class="copy-text" @click="clipboard(orderInfo.nickName, '真实姓名')">复制</button>
+        </div> -->
+        <div class="flex-center pay-user" v-if="orderInfo.jumpType === 0">
+          收款账号： <p class="nick-name">{{orderInfo.accountNumber}}</p>
+          <button class="copy-text" @click="clipboard(orderInfo.accountNumber, '收款账号')">复制</button>
+        </div>
+        <div class="flex-center pay-user">
+          <p class="order-amount">￥{{orderInfo.fixedAmount}} </p>
+          <button class="copy-text" @click="clipboard(orderInfo.fixedAmount, '金额')">复制</button>
+        </div>
+        <!-- <div class="flex-center pay-user">
+          口令： <p class="nick-name">{{orderInfo.uid}}</p>
+          <button class="copy-text" @click="clipboard(orderInfo.uid, '口令')">复制</button>
+        </div> -->
+      </div>
+      <div class="card-box_body" id="alipayQrcode">
+        <div class="pay-image" id="qrcodeUrl">
+          <img :src="orderInfo.qrcodeUrl" alt=""/>
+        </div>
+        <div class="qrcode-img-div" id="qrcode">
+          <div class="qrcode_img_border">
+            <div class="qrcode_img"></div>
+          </div>
+          <img class="cf" src="./images/173.png"/>
+        </div>
+        <div style="margin-top: 18px; font-size: 16px">
+          <p class="text-center">支付流程</p>
+          <p class="red text-center">截图保存 - 打开微信 - 扫码支付</p>
+        </div>
+      </div>
+    </div>
+    <div class="forward-url_body">
+      <div class="red msg-text" v-if="orderInfo.guidance.length > 0">
+        <p v-for="(item, index) in orderInfo.guidance" :key="index">
+          {{item}}
+        </p>
+      </div>
+      <!--<div class="step-div">
+        <h3 class="red">支付流程：</h3>
+        <div class="step-div-img">
+          <img src="./images/1.jpg" alt="步骤1">
+          <img src="./images/2.jpg" alt="步骤2">
+          <img src="./images/3.jpg" alt="步骤3">
+          <img src="./images/4.jpg" alt="步骤4">
+        </div>
+      </div>-->
+    </div>
+  </div>
+  <div v-else>
+    <p class="order-suc" v-if="orderInfo.orderStatus === 1">订单已经支付成功了噢～</p>
+    <p class="order-over" v-else-if="orderInfo.orderStatus === 2">
+      当前订单已超时!<br/>
+      如果你还没有付款, 重新创建新的订单即可~
+    </p>
+  </div>
+
+  <div class="dialog-div" v-if="isVisible">
+    <div class="dialog-div_box">
+      <div class="dialog-div_body font-weight">
+        <p class="dialog-title"> 请输入付款人姓名 </p>
+        <p class="red text-center font-16"> 请正确填写付款微信号的真实姓名</p>
+        <input type="text" v-model="payer" class="input-userName" placeholder="请输入付款人姓名">
+      </div>
+      <div class="dialog-div_footer">
+        <button class="btn-primary" @click="submitOrder">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog-div" v-if="isOverTime">
+    <div class="dialog-div_box">
+      <div class="dialog-div_body">
+        <p class="text-center font-16">
+          当前订单已超时!<br/>
+          如果你还没有付款, 重新创建新的订单即可~
+        </p>
+      </div>
+    </div>
+  </div>
+
+
+  <!--loading-->
+  <div class="dialog-div modal-loading" v-show="loading">
+    <div>
+      <img src="images/loading.gif" alt="">
+      <p>正在加载中...</p>
+    </div>
+  </div>
+
+  <!--toast-->
+  <div class="toast" v-show="toastShow">
+    <p>{{ toastText }}</p>
+  </div>
+</div>
+</body>
+<script>
+  new Vue({
+    el: '#app',
+    data(){
+      return {
+        loading: true,
+        toastText: '',
+        toastShow: false,
+        isVisible: false,
+        isOverTime: false,
+        orderInfo: {
+          tradeNo: '',
+          nickName: '',
+          accountNumber: '',
+          fixedAmount: 0,
+          guidance: [],
+          qrcodeType: 1,
+          hideQrcode: 1,
+          showChannel: 0,
+          qrcodeUrl: '',
+          orderStatus: -1,
+          jumpType: 0
+        },
+        payer: ''
+      }
+    },
+    created() {
+      const query = getUrlParam(window.location.href)
+      if (JSON.stringify(query) !== '{}') {
+        this.getOrderInfo(query)
+      } else {
+        this.loading = false
+      }
+    },
+    methods: {
+      getOrderInfo(query) {
+        if(!query.orderNo) {
+          this.loading = false
+          return
+        }
+        axios.get(API_URL.getOrderData, {
+          params: {
+            tradeNo: query.orderNo
+          }
+        }).then(res => {
+          if (res.status === 200) {
+            if (res.data.code !== 200) {
+              this.setToast(res.data.msg)
+              this.loading = false
+              return
+            }
+            const orderData = res.data.data || {}
+            if (JSON.stringify(orderData) === '{}') {
+              this.setToast('获取订单信息失败')
+              this.loading = false
+              return
+            }
+
+            this.loading = false
+            if (orderData.orderStatus !== 0 ) {
+              this.orderInfo.orderStatus = orderData.orderStatus
+              return
+            }
+
+            const merchantQrcode = orderData.merchantQrcode || {}
+            if (JSON.stringify(merchantQrcode) === '{}') {
+              this.setToast('通道码异常，请重新下单～')
+              return
+            }
+
+            this.isVisible = orderData.memberNameFlag === 0
+
+            const agentChannel = orderData.agentChannel || {}
+
+            if (agentChannel.hideQrcode === 0 || agentChannel.jumpType === 0 || merchantQrcode.qrcodeType === 2) {
+              setTimeout(() => {
+                const alipayQrcode = document.getElementById('alipayQrcode')
+                if (alipayQrcode) {
+                  alipayQrcode.style.display = 'none'
+                }
+              }, 100)
+            }
+            if (merchantQrcode.qrcodeType === 1) {
+              setTimeout(() => {
+                const qrcode = document.getElementById('qrcode')
+                if (qrcode) {
+                  qrcode.style.display = 'none'
+                }
+              }, 100)
+            } else if (merchantQrcode.qrcodeType === 0) {
+              setTimeout(() => {
+                const qrcodeUrl = document.getElementById('qrcodeUrl')
+                if (qrcodeUrl) {
+                  qrcodeUrl.style.display = 'none'
+                }
+                this.getQrcode(merchantQrcode.qrcodeValue)
+              }, 100)
+            }
+            let guidance = agentChannel.guidance
+            let guidanceList = []
+            if (guidance && guidance !== '') {
+              if(guidance.indexOf('\n') > -1) {
+                guidanceList = guidance.split('\n')
+              } else {
+                guidanceList = [guidance]
+              }
+            }
+            this.orderInfo = {
+              tradeNo: orderData.tradeNo,
+              nickName: merchantQrcode.nickName,
+              accountNumber: merchantQrcode.accountNumber,
+              fixedAmount: orderData.fixedAmount,
+              guidance: guidanceList,
+              qrcodeType: merchantQrcode.qrcodeType,
+              hideQrcode: agentChannel.hideQrcode,
+              showChannel: agentChannel.showChannel,
+              orderStatus: orderData.orderStatus,
+              qrcodeValue: merchantQrcode.qrcodeValue,
+              qrcodeUrl: merchantQrcode.qrcodeUrl,
+              initpageForwrod: agentChannel.initpageForwrod,
+              jumpType: agentChannel.jumpType,
+              uid: orderData.uid
+            }
+          } else {
+            this.loading = false
+            this.setToast('获取订单信息失败')
+          }
+        }).catch(() => {
+          this.loading = false
+          this.setToast('获取订单信息失败')
+        })
+      },
+      //生成二维码
+      getQrcode(url){
+        $(".qrcode_img").qrcode({
+          render: "canvas",
+          width: 200,
+          height: 200,
+          text: url
+        });
+        $('.qrcode_img').find('canvas').css({'width': 200,'height': 200});
+      },
+      submitOrder() {
+        if (!this.payer) {
+          this.setToast('请输入付款人姓名')
+          return
+        }
+        if (!/^[\u4e00-\u9fa5]+$/.test(this.payer)) {
+          this.setToast('付款人姓名只能输入中文噢～')
+          return
+        }
+        this.loading = true
+        axios.get(API_URL.setOrderPayer, {
+          params: {
+            tradeNo: this.orderInfo.tradeNo,
+            payer: this.payer
+          }
+        }).then(res => {
+          if (res.status === 200) {
+            if (res.data.code !== 200) {
+              this.setToast(res.data.msg)
+              return
+            }
+            this.isVisible = false
+          } else {
+            this.setToast('提交失败')
+          }
+        }).catch(() => {
+          this.setToast('提交失败')
+        }).finally(() => {
+          this.loading = false
+        })
+      },
+      clipboard(value, text) {
+        navigator.clipboard.writeText(value).then(() => {
+          this.setToast(text + '复制成功')
+        }, (err) => {
+          console.log(err)
+        })
+      },
+      setToast(text) {
+        this.toastText = text
+        this.toastShow = true
+        setTimeout(() => {
+          this.toastShow = false
+        }, 2000)
+      },
+    }
+  })
+</script>
+</html>

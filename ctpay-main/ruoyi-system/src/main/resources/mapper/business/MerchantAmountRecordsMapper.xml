@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.MerchantAmountRecordsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.ruoyi.system.domain.business.MerchantAmountRecordsEntity">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="change_type" property="changeType" />
+        <result column="before_amount" property="beforeAmount" />
+        <result column="after_amount" property="afterAmount" />
+        <result column="change_amount" property="changeAmount" />
+        <result column="create_time" property="createTime" />
+        <result column="order_no" property="orderNo" />
+        <result column="notes" property="notes" />
+        <result column="remarks" property="remarks" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, user_id, change_type, before_amount, after_amount, change_amount, create_time, order_no, notes, remarks
+    </sql>
+
+    <select id="getMoneyByUserId" resultType="java.math.BigDecimal">
+        SELECT sum(change_amount) as money
+        FROM ct_merchant_amount_records
+        WHERE user_id = #{userId}
+          AND change_type = #{changeType}
+          AND create_time >= #{startTime}
+          AND create_time &lt;= #{endTime}
+    </select>
+
+    <select id="getFreezeByDate" resultType="com.ruoyi.system.domain.business.MerchantEntity">
+        SELECT SUBSTR(a.parent_path,1,locate('/',a.parent_path)-1) AS userId,sum(b.change_amount) as freezeAmount
+        FROM ct_merchant a
+                 JOIN ct_merchant_amount_records b on a.user_id = b.user_id
+        WHERE b.create_time >= #{startTime}
+          and b.create_time &lt;= #{endTime}
+          AND b.amount_type = 2
+          AND b.change_type = 1
+        GROUP BY SUBSTR(a.parent_path,1,locate('/',a.parent_path)-1)
+    </select>
+
+    <select id="getFreezeByUserDate" resultType="com.ruoyi.system.domain.business.MerchantEntity">
+        SELECT a.user_id,sum(b.change_amount) as freezeAmount
+        FROM ct_merchant a
+                 JOIN ct_merchant_amount_records b on a.user_id = b.user_id
+        WHERE b.create_time >= #{startTime}
+          and b.create_time &lt;= #{endTime}
+          AND b.amount_type = 2
+          AND b.change_type = 1
+        GROUP BY a.user_id
+    </select>
+
+    <select id="getMoneyGroupByUserId" resultMap="BaseResultMap">
+        SELECT a.user_id,sum(b.change_amount) as change_amount
+        FROM ct_merchant a
+        JOIN ct_merchant_amount_records b on a.user_id = b.user_id
+        WHERE b.create_time >= #{startTime}
+          and b.create_time &lt;= #{endTime}
+          AND b.amount_type = 1
+          AND (b.change_type = 2)
+        GROUP BY a.user_id
+    </select>
+
+    <select id="amountRecords" resultMap="BaseResultMap">
+        SELECT a.*
+        FROM ct_merchant_amount_records a
+        JOIN ct_merchant b ON a.user_id = b.user_id
+        <where>
+            <if test="dto.userId != null">
+                and a.user_id = #{dto.userId}
+            </if>
+            <if test="dto.userName != null and dto.userName != ''">
+                and a.user_name = #{dto.userName}
+            </if>
+            <if test="dto.merchantLevel != null and dto.merchantLevel != ''">
+                and b.merchant_level = #{dto.merchantLevel}
+            </if>
+            <if test="dto.amountType != null">
+                and a.amount_type = #{dto.amountType}
+            </if>
+            <if test="dto.changeType != null">
+                <choose>
+                    <when test="dto.changeType == 2">
+                        and a.change_type = 2 and change_amount >= 0
+                    </when>
+                    <when test="dto.changeType == 5">
+                        and a.change_type = 2 and change_amount &lt; 0
+                    </when>
+                    <otherwise>
+                        and a.change_type = #{dto.changeType}
+                    </otherwise>
+                </choose>
+
+
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and a.create_time >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and a.create_time &lt;= #{dto.endTime}
+            </if>
+            <if test="dto.orderNo != null and dto.orderNo != ''">
+                and a.order_no = #{dto.orderNo}
+            </if>
+            <if test="dto.parentPath != null and dto.parentPath != ''">
+                AND b.parent_path like concat(#{dto.parentPath},'%')
+            </if>
+        </where>
+    </select>
+</mapper>

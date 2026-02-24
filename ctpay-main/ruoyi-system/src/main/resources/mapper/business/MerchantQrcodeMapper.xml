@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.MerchantQrcodeMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.ruoyi.system.domain.business.MerchantQrcodeEntity">
+        <id column="id" property="id" />
+        <result column="merchant_id" property="merchantId" />
+        <result column="channel_id" property="channelId" />
+        <result column="nick_name" property="nickName" />
+        <result column="account_number" property="accountNumber" />
+        <result column="uid" property="uid" />
+        <result column="qrcode_type" property="qrcodeType" />
+        <result column="qrcode_value" property="qrcodeValue" />
+        <result column="qrcode_url" property="qrcodeUrl" />
+        <result column="account_remark" property="accountRemark" />
+        <result column="min_amount" property="minAmount" />
+        <result column="max_amount" property="maxAmount" />
+        <result column="day_limit" property="dayLimit" />
+        <result column="count_limit" property="countLimit" />
+        <result column="create_time" property="createTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, merchant_id, channel_id, nick_name, account_number, uid, qrcode_type, qrcode_value, qrcode_url, account_remark, min_amount, max_amount, day_limit, count_limit, create_time
+    </sql>
+
+    <select id="reportQrcode" resultType="com.ruoyi.system.domain.vo.MerchantQrcodeReportVO">
+        SELECT
+            SUM(totalCount) as totalCount,sum(openCount) as openCount,sum(useCount) as useCount,
+            sum(case when status = 0 and work_status = 0 and order_permission = 0 then 1 else 0 END) as acceptCount
+        FROM(
+            SELECT b.user_id,b.order_permission,b.`status`,b.work_status,count(id) as totalCount,
+            sum(case when a.`status` = 0 then 1 else 0 end)as openCount,
+            sum(case when a.`status` = 0 and a.del_flag = 0 and b.order_permission = 0 and b.work_status = 0 and b.`status` = 0  then 1 else 0 end)as useCount
+            FROM ct_merchant_qrcode a
+            JOIN ct_merchant b on a.merchant_id = b.user_id
+            WHERE b.del_flag = 0
+            <if test="dto.agentId != null">
+                and b.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.nickName != null and dto.nickName != ''">
+                and a.nick_name like concat('%',#{dto.nickName},'%')
+            </if>
+            <if test="dto.accountNumber != null and dto.accountNumber != ''">
+                and a.account_number like concat('%',#{dto.accountNumber},'%')
+            </if>
+            <if test="dto.agentId != null">
+                and a.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.channelId != null">
+                and a.channel_id = #{dto.channelId}
+            </if>
+            <if test="dto.status != null">
+                and b.status = #{dto.status}
+            </if>
+            <if test="dto.delFlag != null">
+                and b.del_flag = #{dto.delFlag}
+            </if>
+            GROUP BY b.user_id,b.order_permission,b.`status`,b.work_status
+        )m
+    </select>
+
+    <select id="totalChildQrcode" resultType="com.ruoyi.system.domain.business.MerchantQrcodeEntity">
+        SELECT merchant_id,channel_id,b.user_name as merchant_name,c.channel_code,c.channel_name,count(1) as qrcodeNum
+        FROM ct_merchant_qrcode a
+                 JOIN ct_merchant b on a.merchant_id = b.user_id
+                 JOIN ct_channel c on c.id = a.channel_id
+        WHERE a.del_flag = 0
+        <if test="dto.parentPath != null and dto.parentPath != ''">
+            AND b.parent_path like concat(#{dto.parentPath},'%')
+        </if>
+        <if test="dto.merchantName != null and dto.merchantName != ''">
+            and b.user_name like concat('%',#{dto.merchantName},'%')
+        </if>
+        <if test="dto.channelId != null">
+            and a.channel_id = #{dto.channelId}
+        </if>
+        GROUP BY merchant_id,channel_id,b.user_name,c.channel_code,c.channel_name
+    </select>
+</mapper>

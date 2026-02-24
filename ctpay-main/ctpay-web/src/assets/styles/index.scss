@@ -1,0 +1,404 @@
+@import './variables.scss';
+@import './mixin.scss';
+@import './transition.scss';
+@import './element-ui.scss';
+@import './sidebar.scss';
+@import './btn.scss';
+
+// 思源字体
+@font-face {
+  font-family: 'SourceHanSansCN';
+  src: url('~@/assets/font/SourceHanSansCN-Regular.otf');
+  font-weight: normal;
+  font-style: normal;
+}
+
+
+body {
+  height: 100%;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-family: SourceHanSansCN, Microsoft YaHei, Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Arial, sans-serif;
+}
+
+label {
+  font-weight: 700;
+}
+
+html {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+#app {
+  height: 100%;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+* {
+  padding: 0;
+  margin: 0
+}
+
+.el-dialog {
+  min-width: 330px
+}
+
+.no-padding {
+  padding: 0px !important;
+}
+
+.padding-content {
+  padding: 4px 0;
+}
+
+a:focus,
+a:active {
+  outline: none;
+}
+
+a,
+a:focus,
+a:hover {
+  cursor: pointer;
+  color: inherit;
+  text-decoration: none;
+}
+
+ul {
+  list-style: none;
+}
+
+div:focus {
+  outline: none;
+}
+
+.w100 {
+  width: 100%
+}
+
+.fr {
+  float: right;
+}
+
+.fl {
+  float: left;
+}
+
+.pr-5 {
+  padding-right: 5px;
+}
+
+.pl-5 {
+  padding-left: 5px;
+}
+.mr-10 {
+  margin-right: 10px
+}
+.ml-10 {
+  margin-left: 10px
+}
+.mt-10 {
+  margin-top: 10px
+}
+.mb-10 {
+  margin-bottom: 10px
+}
+
+.block {
+  display: block;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.inlineBlock {
+  display: block;
+}
+
+.clearfix {
+  &:after {
+    visibility: hidden;
+    display: block;
+    font-size: 0;
+    content: " ";
+    clear: both;
+    height: 0;
+  }
+}
+
+aside {
+  background: #eef1f6;
+  padding: 8px 24px;
+  margin-bottom: 20px;
+  border-radius: 2px;
+  display: block;
+  line-height: 32px;
+  font-size: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  color: #2c3e50;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  a {
+    color: #337ab7;
+    cursor: pointer;
+
+    &:hover {
+      color: rgb(32, 160, 255);
+    }
+  }
+}
+
+.el-submenu .el-menu-item {
+  padding-left: 30px;
+  padding-right: 16px
+}
+
+//main-container全局样式
+.app-container {
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+@media screen and (max-width: 768px) {
+  .app-container {
+    overflow: auto;
+  }
+}
+
+.components-container {
+  margin: 30px 50px;
+  position: relative;
+}
+
+.pagination-container {
+  margin-top: 30px;
+}
+
+.text-center {
+  text-align: center
+}
+
+.sub-navbar {
+  height: 50px;
+  line-height: 50px;
+  position: relative;
+  width: 100%;
+  text-align: right;
+  padding-right: 20px;
+  transition: 600ms ease position;
+  background: linear-gradient(90deg, rgba(32, 182, 249, 1) 0%, rgba(32, 182, 249, 1) 0%, rgba(33, 120, 241, 1) 100%, rgba(33, 120, 241, 1) 100%);
+
+  .subtitle {
+    font-size: 20px;
+    color: #fff;
+  }
+
+  &.draft {
+    background: #d0d0d0;
+  }
+
+  &.deleted {
+    background: #d0d0d0;
+  }
+}
+
+.link-type,
+.link-type:focus {
+  color: #337ab7;
+  cursor: pointer;
+
+  &:hover {
+    color: rgb(32, 160, 255);
+  }
+}
+
+.filter-container {
+  padding-bottom: 10px;
+
+  .filter-item {
+    display: inline-block;
+    vertical-align: middle;
+    margin-bottom: 10px;
+  }
+}
+
+.el-button.min-button {
+  height: 22px;
+  line-height: 22px;
+  padding: 0 5px;
+  font-size: 12px;
+}
+
+
+.el-dialog__body {
+  padding: 15px 20px;
+}
+
+// 备注文字
+.remark-text {
+  font-size: 12px;
+  color: #909090;
+  line-height: 26px;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.flex-1 {
+  flex: 1;
+}
+
+.column {
+  flex-direction: column;
+}
+
+.dialog-form-height {
+  max-height: 568px;
+  overflow: auto;
+}
+
+.dialog-width {
+  min-width: 375px;
+}
+
+.el-input-number.is-without-controls .el-input__inner {
+  text-align: left;
+}
+
+.font-12 {
+  font-size: 12px
+}
+
+.font-bold {
+  font-weight: 700;
+}
+
+.text-o {
+  color: #ff6800;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-red {
+  color: #ff0000
+}
+
+.text-green {
+  color: #42d885
+}
+
+.text-green1 {
+  color: #04b350
+}
+
+.align-center {
+  text-align: center
+}
+
+.ql-align-center {
+  text-align: center
+}
+
+// 一行溢出显示省略号
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// el-switch 文件在开关里面的样式
+.el-switch__label * {
+  font-size: 12px;
+}
+.el-switch__label {
+  position: absolute;
+  display: none;
+  color: #fff;
+}
+
+.el-switch__label--right {
+  z-index: 1;
+  // left: -2px;
+  line-height: 18px;
+  margin-left: 5px;
+  &.is-active {
+    color: #fff
+  }
+}
+
+.el-switch__label--left {
+  z-index: 1;
+  right: -5px;
+  line-height: 18px;
+}
+
+.el-switch__label.is-active {
+  display: block;
+}
+
+.text-red1 {
+  color: #9c270d;
+}
+
+.table-overview {
+  width: 100%;
+  border-left: 5px solid #5FB878;
+  border-radius: 0 2px 2px 0;
+  background-color: #FAFAFA;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.text-bg-green {
+  background: #42d885;
+  color: #fff;
+  padding: 0 5px;
+  border-radius: 2px;
+  margin: 0 5px;
+}
+
+.text-bg-black {
+  background: #000;
+  color: #fff;
+  padding: 0 5px;
+  border-radius: 2px;
+}
+
+.text-bg-blue {
+  background: #2d8cf0;
+  color: #fff;
+  padding: 0 5px;
+  border-radius: 2px;
+} 
+
+.text-bg-red {
+  background: #f56c6c;
+  color: #fff;
+  padding: 0 5px;
+  border-radius: 2px;
+}

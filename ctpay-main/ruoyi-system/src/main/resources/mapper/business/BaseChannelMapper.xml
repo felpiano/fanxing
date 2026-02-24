@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.BaseChannelMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.ruoyi.system.domain.business.BaseChannelEntity">
+        <id column="id" property="id" />
+        <result column="channel_id" property="channelId" />
+        <result column="cost_rate" property="costRate" />
+        <result column="status" property="status" />
+        <result column="overtime" property="overtime" />
+        <result column="over_amount" property="overAmount" />
+        <result column="payurl_user" property="payurlUser" />
+        <result column="initpage_forwrod" property="initpageForwrod" />
+        <result column="qrcode_model" property="qrcodeModel" />
+        <result column="over_amount_value" property="overAmountValue" />
+        <result column="over_amount_down" property="overAmountDown" />
+        <result column="guidance" property="guidance" />
+        <result column="set_amount" property="setAmount" />
+        <result column="locked_code" property="lockedCode" />
+        <result column="hide_qrcode" property="hideQrcode" />
+        <result column="max_code" property="maxCode" />
+        <result column="show_channel" property="showChannel" />
+        <result column="show_confirm" property="showConfirm" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, channel_id, cost_rate, `status`, overtime, over_amount, payurl_user, initpage_forwrod, qrcode_model, over_amount_value, over_amount_down, guidance, set_amount, locked_code, hide_qrcode, max_code, show_channel, show_confirm
+    </sql>
+
+    <select id="listByUser" resultType="com.ruoyi.system.domain.business.BaseChannelEntity">
+        SELECT
+        a.*,b.channel_code,b.channel_name
+        FROM ct_base_channel a
+        JOIN ct_channel b on a.channel_id = b.id
+        where 1=1
+        <if test="channelCode != null and channelCode != ''">
+            and b.channel_code like concat('%',#{channelCode},'%')
+        </if>
+        <if test="channelName != null and channelName != ''">
+            and b.channel_name like concat('%',#{channelName},'%')
+        </if>
+    </select>
+</mapper>

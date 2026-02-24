@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>支付宝扫码收银台</title>
+    <script>
+      const randomNum = Math.random().toString(36).substring(7);
+      document.write('<link rel="stylesheet" href="css/index.css?v=' + randomNum + '">');
+      document.write('<link rel="stylesheet" href="css/alipay.css?v=' + randomNum + '">');
+    </script>
+    <script src="js/vue.js"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/request_03.js"></script>
+    <script src="js/jquery.js"></script>
+    <script src="js/jquery.qrcode.min.js"></script>
+  </head>
+  <body>
+    <div id="app" v-cloak class="forward-url">
+      <div v-if="orderInfo.orderStatus == -1"></div>
+      <div class="forward-url_main" v-else-if="orderInfo.orderStatus === 0">
+        <div class="forward-url_head">
+          <div class="head-box">
+            <div class="flex-center" v-if="orderInfo.showChannel === 0">
+              <img class="head-logo" alt="支付宝" src="data:image/png;base64,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"/>
+              <h4 class="head-title">支付宝</h4>
+            </div>
+            <div class="order-no">订单号：{{orderInfo.tradeNo}}</div>
+          </div>
+          <div class="order-info">
+            <p v-if="orderInfo.channelId === 1110" class="red" style="font-size: 20px; text-align: center; font-weight: 700">
+              请截图后用支付宝扫码支付
+            </p>
+            <div class="card-box_body" id="alipayQrcode" v-if="orderInfo.channelId === 1110">
+              <div class="pay-image" id="qrcodeUrl">
+                <img :src="orderInfo.qrcodeUrl" alt=""/>
+              </div>
+              <div class="qrcode-img-div" id="qrcode">
+                <div class="qrcode_img"></div>
+                <img class="cf" src="./images/173.png"/>
+              </div>
+            </div>
+            <div class="flex-center pay-user mb-20">
+              金额：
+              <p class="red order-amount">￥{{orderInfo.fixedAmount}} </p>
+              <button class="copy-text" @click="clipboard(orderInfo.fixedAmount)">复制</button>
+            </div>
+            <div class="flex-center pay-user mb-20">
+              支付宝姓名： <span class="red" style="font-size: 16px">{{orderInfo.nickName}}</span>
+              <button class="copy-text" @click="clipboard(orderInfo.nickName)">复制</button>
+            </div>
+            <div class="flex-center pay-user mb-20" v-if="orderInfo.channelId !== 1110">
+              支付宝账号： <span class="red" style="font-size: 16px">{{orderInfo.accountNumber}}</span>
+              <button class="copy-text" @click="clipboard(orderInfo.accountNumber)">复制</button>
+            </div>
+            <!--<button v-if="orderInfo.jumpType === 0 && orderInfo.initpageForwrod === 0" class="open-alipay" @click="openAlipay">打开支付宝付款</button>
+            <p v-if="orderInfo.jumpType === 0 && orderInfo.initpageForwrod === 0" style="text-align: center; font-size: 16px; color: red;font-weight: 700; margin: 14px 0 8px 0">
+              若点击无反应，请自行去支付宝付款哦～
+            </p>-->
+            <label class="btn-blue" style="position: relative;" v-if="orderInfo.channelId !== 1117">
+              上传回单/凭证
+              <input
+                type="file"
+                id="fileInput"
+                accept="image/*"
+                @change="handleUpload"
+                style="opacity: 0; position: absolute; left: 0; top: 0; width: 160px; height: 42px; z-index: 10;"
+              />
+            </label>
+            <p style="text-align: center; font-size: 16px; color: red;font-weight: 700">上传回单/凭证回调更快哦～</p>
+            <!--v-if="orderInfo.jumpType !== 0 && orderInfo.initpageForwrod !== 0"-->
+            <div class="tx-msg">
+              <h4 class="big-red" style="color: #333">支付流程</h4>
+              <p class="big-red" v-if="orderInfo.hideQrcode === 0 || orderInfo.qrcodeType === 2">
+                打开支付宝—点击转账—复制支付宝账号搜索
+              </p>
+              <p v-else class="big-red">截图保存二维码——打开支付宝——扫码支付</p>
+            </div>
+          </div>
+        </div>
+        <div class="forward-url_body">
+          <div class="red msg-text" v-if="orderInfo.guidance.length > 0">
+            <p v-for="(item, index) in orderInfo.guidance" :key="index">
+              {{item}}
+            </p>
+          </div>
+
+          <div class="card-box_body" id="alipayQrcode" v-if="orderInfo.channelId !== 1110">
+            <div class="pay-image" id="qrcodeUrl">
+              <img :src="orderInfo.qrcodeUrl" alt=""/>
+            </div>
+            <div class="qrcode-img-div" id="qrcode">
+              <div class="qrcode_img"></div>
+              <img class="cf" src="./images/173.png"/>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else>
+        <p class="order-suc" v-if="orderInfo.orderStatus === 1">订单已经支付成功了噢～</p>
+        <p class="order-over" v-else-if="orderInfo.orderStatus === 2">
+          当前订单已超时!<br/>
+          如果你还没有付款, 重新创建新的订单即可~
+        </p>
+      </div>
+
+      <div class="dialog-div" v-if="isVisible">
+        <div class="dialog-div_box">
+          <div class="dialog-div_body font-weight">
+            <p class="dialog-title"> 请输入付款人姓名 </p>
+            <p class="red text-center font-16"> 请正确填写付款支付宝号的真实姓名</p>
+            <input type="text" maxlength="6" v-model="payer" class="input-userName" placeholder="请输入付款人姓名">
+          </div>
+          <div class="dialog-div_footer">
+            <button class="btn-primary" @click="submitOrder">确定</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dialog-div" v-if="isOverTime">
+        <div class="dialog-div_box">
+          <div class="dialog-div_body">
+            <p class="text-center font-16">
+              当前订单已超时!<br/>
+              如果你还没有付款, 重新创建新的订单即可~
+            </p>
+          </div>
+        </div>
+      </div>
+
+
+      <!--loading-->
+    <div class="dialog-div modal-loading" v-show="loading">
+      <div>
+        <img src="images/loading.gif" alt="">
+        <p>正在加载中...</p>
+      </div>
+    </div>
+
+      <!--toast-->
+      <div class="toast" v-show="toastShow">
+        <p>{{ toastText }}</p>
+      </div>
+    </div>
+  </body>
+  <script>
+    new Vue({
+      el: '#app',
+      data(){
+        return {
+          loading: true,
+          toastText: '',
+          toastShow: false,
+          isVisible: false,
+          isOverTime: false,
+          orderInfo: {
+            tradeNo: '',
+            fixedAmount: 0,
+            guidance: [],
+            nickName: '',
+            accountNumber: '',
+            qrcodeType: 1,
+            hideQrcode: 1,
+            showChannel: 0,
+            qrcodeUrl: '',
+            orderStatus: -1,
+            jumpType: 0,
+            uid: ''
+          },
+          payer: ''
+        }
+      },
+      created() {
+        const query = getUrlParam(window.location.href)
+        if (JSON.stringify(query) !== '{}') {
+          this.getOrderInfo(query)
+        } else {
+          this.loading = false
+        }
+      },
+      methods: {
+        getOrderInfo(query) {
+          if(!query.orderNo) {
+            this.loading = false
+            return
+          }
+          axios.get(API_URL.getOrderData, {
+            params: {
+              tradeNo: query.orderNo
+            }
+          }).then(res => {
+            if (res.status === 200) {
+              if (res.data.code !== 200) {
+                this.setToast(res.data.msg)
+                this.loading = false
+                return
+              }
+              const orderData = res.data.data || {}
+              if (JSON.stringify(orderData) === '{}') {
+                this.setToast('获取订单信息失败，请刷新重试')
+                this.loading = false
+                return
+              }
+
+              this.loading = false
+              if (orderData.orderStatus !== 0 ) {
+                this.orderInfo.orderStatus = orderData.orderStatus
+                return
+              }
+
+              const merchantQrcode = orderData.merchantQrcode || {}
+              if (JSON.stringify(merchantQrcode) === '{}') {
+                this.setToast('通道码异常，请重新下单～')
+                return
+              }
+
+              const agentChannel = orderData.agentChannel || {}
+
+              if (agentChannel.payurlUser === 0) {
+                this.isVisible = orderData.memberNameFlag === 0
+              } else {
+                this.isVisible = false
+              }
+
+              if (agentChannel.hideQrcode === 0 || merchantQrcode.qrcodeType === 2) {
+                setTimeout(() => {
+                  const alipayQrcode = document.getElementById('alipayQrcode')
+                  if (alipayQrcode) {
+                    alipayQrcode.style.display = 'none'
+                  }
+                }, 100)
+              }
+              if (merchantQrcode.qrcodeType === 1) {
+                setTimeout(() => {
+                  const qrcode = document.getElementById('qrcode')
+                  if (qrcode) {
+                    qrcode.style.display = 'none'
+                  }
+                }, 100)
+              } else if (merchantQrcode.qrcodeType === 0) {
+                setTimeout(() => {
+                  const qrcodeUrl = document.getElementById('qrcodeUrl')
+                  if (qrcodeUrl) {
+                    qrcodeUrl.style.display = 'none'
+                  }
+                  let url = ''
+                  if (merchantQrcode.channelId === 1110) {
+                    url = `https://www.alipay.com/?appId=20000116&actionType=toAccount&goBack=NO&amount=${orderData.fixedAmount}&userId=${merchantQrcode.uid}&remark=${orderData.uid}&desc=shabi&memo=${orderData.uid}`
+                  } else {
+                    url = merchantQrcode.qrcodeValue
+                  }
+                  this.getQrcode(encodeURIComponent(url))
+                }, 100)
+              }
+              let guidance = agentChannel.guidance
+              let guidanceList = []
+              if (guidance && guidance !== '') {
+                if(guidance.indexOf('\n') > -1) {
+                  guidanceList = guidance.split('\n')
+                } else {
+                  guidanceList = [guidance]
+                }
+              }
+              this.orderInfo = {
+                tradeNo: orderData.tradeNo,
+                fixedAmount: orderData.fixedAmount,
+                guidance: guidanceList,
+                nickName: merchantQrcode.nickName,
+                accountNumber: merchantQrcode.accountNumber,
+                qrcodeType: merchantQrcode.qrcodeType,
+                hideQrcode: agentChannel.hideQrcode,
+                showChannel: agentChannel.showChannel,
+                orderStatus: orderData.orderStatus,
+                qrcodeValue: merchantQrcode.qrcodeValue,
+                qrcodeUrl: merchantQrcode.qrcodeUrl,
+                initpageForwrod: agentChannel.initpageForwrod,
+                jumpType: agentChannel.jumpType,
+                channelId: merchantQrcode.channelId,
+                alipayUID: merchantQrcode.uid || '',
+                uid: orderData.uid
+              }
+            } else {
+              this.loading = false
+              this.setToast('请刷新重试哦～')
+            }
+          }).catch(() => {
+            this.loading = false
+            this.setToast('网络飞走啦，请刷新重试～')
+          })
+        },
+        //生成二维码
+        getQrcode(url){
+          $(".qrcode_img").qrcode({
+              render: "canvas",
+              width: 200,
+              height: 200,
+              text: decodeURIComponent(url)
+          });
+          $('.qrcode_img').find('canvas').css({'width': 200,'height': 200});
+        },
+        submitOrder() {
+          if (!this.payer) {
+            this.setToast('请输入付款人姓名')
+            return
+          }
+          if (!/^[\u4e00-\u9fa5]+$/.test(this.payer)) {
+            this.setToast('付款人姓名只能输入中文噢～')
+            return
+          }
+          this.loading = true
+          axios.get(API_URL.setOrderPayer, {
+            params: {
+              tradeNo: this.orderInfo.tradeNo,
+              payer: this.payer
+            }
+          }).then(res => {
+            if (res.status === 200) {
+              if (res.data.code !== 200) {
+                this.setToast(res.data.msg)
+                return
+              }
+              this.isVisible = false
+            } else {
+              this.setToast('提交失败')
+            }
+          }).catch(() => {
+            this.setToast('提交失败')
+          }).finally(() => {
+            this.loading = false
+          })
+        },
+        handleUpload() {
+          if (!this.orderInfo.tradeNo) {
+            this.setToast('订单号缺失')
+            return;
+          }
+          const file = $('#fileInput')[0].files[0]
+          if (!file) {
+            this.setToast('请选择回单/凭证')
+            return;
+          }
+          this.loading = true
+          const formData = new FormData();
+          formData.append('file', file);
+          axios({
+            url: API_URL.upload,
+            data: formData,
+            method: 'POST',
+            processData: false,
+            contentType: false
+          }).then(res => {
+            if (res.status === 200) {
+              axios.get(API_URL.ploadReceiptImg, {
+                params: {
+                  receiptImg: res.data.url,
+                  tradeNo: this.orderInfo.tradeNo,
+                }
+              }).then(res => {
+                this.setToast('上传成功')
+              }).finally(() => {
+                this.loading = false
+              })
+            }
+          })
+        },
+        clipboard(text) {
+          navigator.clipboard.writeText(text).then(() => {
+            this.setToast('复制成功')
+          }, (err) => {
+            console.log(err)
+          })
+          // const input = document.createElement('input')
+          // input.value = text
+          // document.body.appendChild(input)
+          // input.select()
+          // document.execCommand('copy')
+          // document.body.removeChild(input)
+          // this.setToast('复制成功')
+        },
+        setToast(text) {
+          this.toastText = text
+          this.toastShow = true
+          setTimeout(() => {
+            this.toastShow = false
+          }, 2000)
+        },
+        openAlipay() {
+          const browser = this.getBrowserType()
+          if (browser === 'wechat' || browser === 'alipay' || browser === 'qq') {
+            this.setToast('请在浏览器中打开此页面')
+          } else if (browser === 'huawei') {
+            if (this.orderInfo.channelId === 1110) {
+              window.location.href = `alipays://platformapi/startapp?appId=20000116&actionType=toAccount&goBack=NO&amount=${this.orderInfo.fixedAmount}&userId=${this.orderInfo.alipayUID}&remark=${this.orderInfo.uid}&desc=shabi&memo=${this.orderInfo.uid}`
+            } else {
+              window.location.href = `alipays://platformapi/startapp?appId=20000116&actionType=toAccount&goBack=NO&amount=${this.orderInfo.fixedAmount}&account=${this.orderInfo.accountNumber}&remark=&desc=&memo=`
+            }
+          } else {
+            if (this.orderInfo.channelId === 1110) {
+              window.location.href = `https://www.alipay.com/?appId=20000116&actionType=toAccount&goBack=NO&amount=${this.orderInfo.fixedAmount}&userId=${this.orderInfo.alipayUID}&remark=${this.orderInfo.uid}&desc=shabi&memo=${this.orderInfo.uid}`
+            } else {
+              window.location.href = `https://www.alipay.com/?appId=20000116&actionType=toAccount&goBack=NO&amount=${this.orderInfo.fixedAmount}&account=${this.orderInfo.accountNumber}&remark=&desc=&memo=`
+            }
+          }
+        },
+        getBrowserType() {
+          const ua = navigator.userAgent.toLowerCase();
+
+          if (ua.includes('micromessenger')) return 'wechat';
+          if (ua.includes('alipayclient')) return 'alipay';
+          if (ua.includes('huawei') || ua.includes('hmbrowser') || ua.includes('honor')) return 'huawei';
+          if (ua.includes('miuibrowser')) return 'miui';
+          if (ua.includes('oppo')) return 'oppo';
+          if (ua.includes('vivobrowser')) return 'vivo';
+          if (ua.includes('qqbrowser')) return 'qq';
+          if (ua.includes('chrome')) return 'chrome';
+          if (ua.includes('safari') && !ua.includes('chrome')) return 'safari';
+          return 'unknown';
+        }
+      }
+    })
+  </script>
+</html>

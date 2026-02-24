@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.InOrderMapper">
+
+    <select id="taskByCreateOrder" resultType="com.ruoyi.system.domain.vo.SuitableQrcodeVO">
+        SELECT a.id as qrcodeId,a.merchant_id,a.agent_id,a.nick_name,a.account_number,a.uid,a.account_remark,c.balance,
+               a.min_amount as qrcodeMinAmount,a.max_amount as qrcodeMaxAmount,a.qrcode_type,a.qrcode_value,a.qrcode_url,a.day_limit,a.count_limit,
+               b.merchant_overtime,b.channel_rate as merchantRate,b.min_amount as merchantMinAmount, b.max_amount as merchantMaxAmount,c.merchant_name,
+               f.user_id as shopId,f.user_name as shopName,f.min_amount as shopMinAmount, f.max_amount as shopMaxAmount,f.sign_secret,
+               g.channel_rate as shopRate,h.id as channelId,h.channel_code,h.channel_name,cac.overtime,cac.id as agentChannelId,ca.user_name as agentName,
+               cac.over_amount,cac.over_amount_rate,cac.locked_code,cac.set_amount,cac.over_amount_value,ifnull(b.weight,c.weight) as weight, b.id as merchantChannelId,cac.cost_rate as agentRate,
+               cac.qrcode_model as qrcodeModel,c.min_amount as minMerchantGetAmount,c.order_remind as orderRemind,
+               b.merchant_rate_one as merchantRateOne,b.merchant_rate_two as merchantRateTwo,b.merchant_rate_three as merchantRateThree,
+               b.merchant_rate_four as merchantRateFour, b.merchant_rate_five as merchantRateFive,ca.weight_type,
+               k.baseDeposit as baseDeposit
+        FROM ct_merchant_qrcode a
+                 JOIN ct_merchant_channel b on a.merchant_channel_id = b.id and a.merchant_id = b.merchant_id
+                 JOIN ct_merchant c on a.merchant_id = c.user_id
+                 JOIN ct_shop_merchant_relation d on d.merchant_id = c.user_id
+                 JOIN ct_shop f on d.shop_id = f.user_id
+                 JOIN ct_shop_base_channel g on f.user_id = g.shop_id and g.channel_id = b.channel_id
+                 JOIN ct_channel h on g.channel_id = h.id
+                 JOIN ct_agent ca on a.agent_id = ca.user_id
+                 JOIN ct_agent_channel cac on a.agent_id = cac.agent_id AND cac.channel_id = h.id
+                 JOIN (SELECT max(base_deposit) as baseDeposit,merchant_id  FROM ct_merchant_channel k where k.`status` = 0 GROUP BY merchant_id) k
+                      ON k.merchant_id = a.merchant_id
+        WHERE
+            a.`status` = 0
+          AND a.del_flag = 0
+          AND b.`status` = 0
+          AND c.del_flag = 0
+          AND c.`status` = 0
+          AND d.`status` = 0
+          AND f.`status` = 0
+          AND f.del_flag = 0
+          AND g.`status` = 0
+          AND h.`status` = 0
+          AND h.del_flag = 0
+          AND c.work_status = 0
+          AND c.order_permission = 0
+          AND ca.`status` = 0
+          AND cac.`status` = 0
+          And b.agent_contrl = 0
+        ORDER BY a.agent_id,a.merchant_id,a.id
+    </select>
+
+    <select id="merchantOrderTotal" resultType="com.ruoyi.system.domain.vo.MerchantOrderTotalVO">
+        SELECT sum(order_amount) as totalAmount,
+               sum(case when order_status = 1 then order_amount else 0 end) as successAmount,
+               count(id) as totalCount,
+               sum(case when order_status = 1 then 1 else 0 end) as successCount
+        FROM ct_in_order a
+        <where>
+            <if test="dto.merchantId != null">
+                and a.merchant_id = #{dto.merchantId}
+            </if>
+            <if test="dto.merchantName != null and dto.merchantName != ''">
+                and a.merchant_name like concat('%',#{dto.merchantName},'%')
+            </if>
+            <if test="dto.channelId != null">
+                and a.channel_id = #{dto.channelId}
+            </if>
+            <if test="dto.channelName != null and dto.channelName != ''">
+                and a.channel_name like concat('%',#{dto.channelName},'%')
+            </if>
+            <if test="dto.shopOrderNo != null and dto.shopOrderNo != ''">
+                and a.shop_order_no like concat('%',#{dto.shopOrderNo},'%')
+            </if>
+            <if test="dto.tradeNo != null and dto.tradeNo != ''">
+                and a.trade_no like concat('%',#{dto.tradeNo},'%')
+            </if>
+            <if test="dto.orderStatus != null">
+                and a.order_status = #{dto.orderStatus}
+            </if>
+            <if test="dto.callbackStatus != null">
+                and a.callback_status = #{dto.callbackStatus}
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and a.order_time >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.startTime != ''">
+                and a.order_time &lt;= #{dto.endTime}
+            </if>
+            <if test="dto.accountNumber != null and dto.accountNumber != ''">
+                and a.account_number = #{dto.accountNumber}
+            </if>
+        </where>
+    </select>
+    <select id="queryTgOrder" resultType="com.ruoyi.system.telegram.tgDataEntity.TgOrderInfo">
+        select a.shop_order_no as clientOrderNo,a.trade_no as orderNo,
+        SUBSTRING_INDEX(b.telegram_group, '/', 1) AS ptChatId,
+        SUBSTRING_INDEX(d.telegram_group, '/', 1) AS shChatId
+        from ct_in_order a left join ct_merchant b on a.merchant_id=b.user_id
+        left join ct_in_order_detail c on a.id=c.order_id
+        left join ct_shop d on c.shop_id=d.user_id
+        <where>
+            <if test="dto.clientOrderNo != null">
+                and a.shop_order_no=#{dto.clientOrderNo}
+            </if>
+        </where>
+    </select>
+    <select id="queryOrderByOnebuy" resultType="com.ruoyi.system.domain.business.InOrderEntity">
+        select * from ct_in_order o
+        where channel_id = 1123
+        and account_number = #{shopId}
+        and union_code = #{orderRemark}
+        and order_amount * 100 = #{amount}
+        order by order_time desc
+        limit 1
+    </select>
+</mapper>

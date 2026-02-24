@@ -1,0 +1,776 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.InOrderDetailMapper">
+
+    <select id="queryOrderList" resultType="com.ruoyi.system.domain.vo.OrderVO" parameterType="com.ruoyi.system.domain.dto.OrderQueryDTO">
+        SELECT a.*,b.*,c.parent_path,c.merchant_level
+        FROM ct_in_order a
+        JOIN ct_in_order_detail b on a.id = b.order_id
+        left join ct_merchant c on c.user_id = a.merchant_id
+        <where>
+            <if test="dto.agentId != null">
+                and b.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.agentName != null and dto.agentName != ''">
+                and b.agent_name like concat('%',#{dto.agentName},'%')
+            </if>
+            <if test="dto.shopId != null">
+                and b.shop_id = #{dto.shopId}
+            </if>
+            <if test="dto.shopName != null and dto.shopName != ''">
+                and b.shop_name like concat('%',#{dto.shopName},'%')
+            </if>
+            <if test="dto.merchantId != null">
+                and a.merchant_id = #{dto.merchantId}
+            </if>
+            <if test="dto.merchantName != null and dto.merchantName != ''">
+                and a.merchant_name like concat('%',#{dto.merchantName},'%')
+            </if>
+            <if test="dto.channelId != null">
+                and a.channel_id = #{dto.channelId}
+            </if>
+            <if test="dto.channelName != null and dto.channelName != ''">
+                and a.channel_name like concat('%',#{dto.channelName},'%')
+            </if>
+            <if test="dto.shopOrderNo != null and dto.shopOrderNo != ''">
+                and a.shop_order_no like concat('%',#{dto.shopOrderNo},'%')
+            </if>
+            <if test="dto.tradeNo != null and dto.tradeNo != ''">
+                and a.trade_no like concat('%',#{dto.tradeNo},'%')
+            </if>
+            <if test="dto.orderStatus != null">
+                and a.order_status = #{dto.orderStatus}
+            </if>
+            <if test="dto.callbackStatus != null">
+                and a.callback_status = #{dto.callbackStatus}
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and a.order_time >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and a.order_time &lt;= #{dto.endTime}
+            </if>
+            <if test="dto.memberIp != null and dto.memberIp != ''">
+                and a.member_ip = #{dto.memberIp}
+            </if>
+            <if test="dto.recipient != null and dto.recipient != ''">
+                and a.nick_name like  concat('%',#{dto.recipient},'%')
+            </if>
+            <if test="dto.accountNumber != null and dto.accountNumber != ''">
+                and a.account_number like  concat('%',#{dto.accountNumber},'%')
+            </if>
+            <if test="dto.childIds != null and dto.childIds.size() > 0">
+                and a.merchant_id in
+                <foreach collection="dto.childIds" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+                and a.merchant_id != #{dto.selftMerchantId}
+            </if>
+            <if test="dto.parentMerchantName != null and dto.parentMerchantName != ''">
+                and c.parent_path like concat(#{dto.parentMerchantName}, '%')
+            </if>
+        </where>
+        order by a.id desc
+    </select>
+
+    <select id="queryOrderListTotal" resultType="com.ruoyi.system.domain.vo.OrderTotalVO" parameterType="com.ruoyi.system.domain.dto.OrderQueryDTO">
+        SELECT sum(order_amount) as totalAmount,count(a.id) as totalCount
+        FROM ct_in_order a
+        JOIN ct_in_order_detail b on a.id = b.order_id
+        left join ct_merchant c on c.user_id = a.merchant_id
+        where a.order_status = 1
+            <if test="dto.agentId != null">
+                and b.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.agentName != null and dto.agentName != ''">
+                and b.agent_name like concat('%',#{dto.agentName},'%')
+            </if>
+            <if test="dto.shopId != null">
+                and b.shop_id = #{dto.shopId}
+            </if>
+            <if test="dto.shopName != null and dto.shopName != ''">
+                and b.shop_name like concat('%',#{dto.shopName},'%')
+            </if>
+            <if test="dto.merchantId != null">
+                and a.merchant_id = #{dto.merchantId}
+            </if>
+            <if test="dto.merchantName != null and dto.merchantName != ''">
+                and a.merchant_name like concat('%',#{dto.merchantName},'%')
+            </if>
+            <if test="dto.channelId != null">
+                and a.channel_id = #{dto.channelId}
+            </if>
+            <if test="dto.channelName != null and dto.channelName != ''">
+                and a.channel_name like concat('%',#{dto.channelName},'%')
+            </if>
+            <if test="dto.shopOrderNo != null and dto.shopOrderNo != ''">
+                and a.shop_order_no like concat('%',#{dto.shopOrderNo},'%')
+            </if>
+            <if test="dto.tradeNo != null and dto.tradeNo != ''">
+                and a.trade_no like concat('%',#{dto.tradeNo},'%')
+            </if>
+            <if test="dto.orderStatus != null">
+                and a.order_status = #{dto.orderStatus}
+            </if>
+            <if test="dto.callbackStatus != null">
+                and a.callback_status = #{dto.callbackStatus}
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and ifnull(a.finish_time,a.order_time) >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and ifnull(a.finish_time,a.order_time) &lt;= #{dto.endTime}
+            </if>
+            <if test="dto.memberIp != null and dto.memberIp != ''">
+                and a.member_ip = #{dto.memberIp}
+            </if>
+            <if test="dto.recipient != null and dto.recipient != ''">
+                and a.nick_name like  concat('%',#{dto.recipient},'%')
+            </if>
+            <if test="dto.accountNumber != null and dto.accountNumber != ''">
+                and a.account_number like  concat('%',#{dto.accountNumber},'%')
+            </if>
+            <if test="dto.childIds != null and dto.childIds.size() > 0">
+                and a.merchant_id in
+                <foreach collection="dto.childIds" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+                and a.merchant_id != #{dto.selftMerchantId}
+            </if>
+            <if test="dto.parentMerchantName != null and dto.parentMerchantName != ''">
+                and c.parent_path like concat(#{dto.parentMerchantName}, '%')
+            </if>
+    </select>
+
+    <select id="reportOrderByDate" resultType="com.ruoyi.system.domain.vo.MerchantOrderReportVO">
+        SELECT SUM(order_amount) as totalAmount,count(a.id) as totalCount, SUM(order_amount) as childAmount,
+        (SELECT SUM(change_amount) FROM ct_merchant_amount_records r WHERE r.agent_id = b.agent_id
+        AND amount_type = 2 AND change_type = 1
+        <if test="dto.startTime != null and dto.startTime != ''">
+            AND r.create_time >= #{dto.startTime}
+        </if>
+        <if test="dto.endTime != null and dto.endTime != ''">
+            AND r.create_time &lt;= #{dto.endTime}
+        </if>
+        ) as agentFee
+        FROM ct_in_order a
+        JOIN ct_in_order_detail b on a.id = b.order_id
+        where a.order_status = 1
+        <if test="dto.agentId != null">
+            and b.agent_id = #{dto.agentId}
+        </if>
+        <if test="dto.shopId != null">
+            and b.shop_id = #{dto.shopId}
+        </if>
+        <if test="dto.merchantId != null">
+            and a.merchant_id = #{dto.merchantId}
+        </if>
+        <if test="dto.startTime != null and dto.startTime != ''">
+            and ifnull(a.finish_time,a.order_time) >= #{dto.startTime}
+        </if>
+        <if test="dto.endTime != null and dto.endTime != ''">
+            and ifnull(a.finish_time,a.order_time) &lt;= #{dto.endTime}
+        </if>
+        group by b.agent_id
+    </select>
+
+    <select id="allMerchantChildAmount" resultType="java.math.BigDecimal">
+        SELECT SUM(order_amount) as totalAmount
+        FROM ct_in_order a
+        JOIN ct_in_order_detail b on a.id = b.order_id
+        where a.order_status = 1
+        <if test="startTime != null">
+            and ifnull(a.finish_time,a.order_time) >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            and ifnull(a.finish_time,a.order_time) &lt;= #{endTime}
+        </if>
+        <if test="merchantIds.size() > 0">
+            and a.merchant_id in
+            <foreach collection="merchantIds" open="(" close=")" separator="," item="item">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+    <select id="qrcodeOrders" resultType="com.ruoyi.system.domain.vo.MerchantOrderReportVO">
+        SELECT qrcode_id,SUM(order_amount) as totalAmount,count(1) as totalCount
+        FROM ct_in_order b
+        WHERE order_status = 1
+
+        and ifnull(b.finish_time,b.order_time) >= #{startTime}
+        and ifnull(b.finish_time,b.order_time) &lt;= #{endTime}
+          and merchant_id in
+            <foreach collection="merchantId" separator="," open="(" close=")" item="item">
+                #{item}
+            </foreach>
+        GROUP BY qrcode_id
+    </select>
+
+    <select id="reportMerchantQrcodeOrders" resultType="com.ruoyi.system.domain.vo.MerchantQrcodeOrderVO">
+        select * from
+        (
+        SELECT b.merchant_id,c.user_name as merchant_name,b.nick_name,b.account_number,b.`qrcode_type`,b.`qrcode_value`
+        ,b.`qrcode_url` , b.`account_remark` ,b.uid,
+        b.min_amount,b.max_amount,b.day_limit,b.`status`,b.create_time,b.del_flag,
+        d.id as channel_id,d.channel_name,c.work_status,c.order_permission,
+        case when b.`status` = 0 and b.del_flag = 0 and c.work_status = 0 and c.order_permission = 0 and c.status = 0 then 0 else 1 end as enterOrderStatus,
+        SUM(IFNULL(a.successCount,0)) as successCount,
+        SUM(IFNULL(a.successAmount,0)) as successAmount,
+        SUM(IFNULL(a.totalCount,0)) as totalCount,
+        SUM(IFNULL(a.totalAmount,0)) as totalAmount
+        FROM ct_merchant_qrcode b
+        join ct_merchant c on b.merchant_id = c.user_id
+        join ct_channel d on b.channel_id = d.id
+        LEFT JOIN (SELECT qrcode_id,channel_id,SUM(order_amount) as totalAmount,COUNT(id) as totalCount,
+                SUM(CASE WHEN order_status = 1 then order_amount ELSE 0 END) as successAmount,
+                SUM(CASE WHEN order_status = 1 then 1 ELSE 0 END) as successCount
+                FROM `ct_in_order`
+                WHERE qrcode_id is NOT NULL
+            <if test="dto.startDate != null and dto.startDate != ''">
+                and finish_time >= #{dto.startDate}
+            </if>
+            <if test="dto.endDate != null and dto.endDate != ''">
+                and finish_time &lt;= #{dto.endDate}
+            </if>
+            group by qrcode_id,channel_id
+        ) a on a.qrcode_id = b.id and d.id = a.channel_id
+        WHERE c.del_flag = 0
+        <if test="dto.merchantName != null and dto.merchantName != ''">
+            and c.user_name = #{dto.merchantName}
+        </if>
+        <if test="dto.nickName != null and dto.nickName != ''">
+            and b.nick_name like concat('%',#{dto.nickName},'%')
+        </if>
+        <if test="dto.accountNumber != null and dto.accountNumber != ''">
+            and b.account_number like concat('%',#{dto.accountNumber},'%')
+        </if>
+        <if test="dto.agentId != null">
+            and b.agent_id = #{dto.agentId}
+        </if>
+        <if test="dto.channelId != null">
+            and b.channel_id = #{dto.channelId}
+        </if>
+        <if test="dto.status != null">
+            and b.status = #{dto.status}
+        </if>
+        <if test="dto.delFlag != null">
+            and b.del_flag = #{dto.delFlag}
+        </if>
+        <if test="dto.workStatus != null">
+            and c.work_status = #{dto.workStatus}
+        </if>
+        <if test="dto.orderPermission != null">
+            and c.order_permission = #{dto.orderPermission}
+        </if>
+        <if test="dto.enterOrderStatus != null">
+            <choose>
+                <when test="dto.enterOrderStatus != 0">
+                    and (b.`status` != 0 or b.del_flag != 0 or c.work_status != 0 or c.order_permission != 0 or c.status != 0)
+                </when>
+                <otherwise>
+                    and (b.`status` = 0 and b.del_flag = 0 and c.work_status = 0 and c.order_permission = 0 and c.status = 0)
+                </otherwise>
+            </choose>
+        </if>
+        GROUP BY b.merchant_id,c.user_name,b.nick_name,b.account_number,b.`qrcode_type`,b.`qrcode_value`
+        ,b.`qrcode_url` , b.`account_remark` ,b.uid,
+        b.min_amount,b.max_amount,b.day_limit,b.`status`,b.create_time,b.del_flag,d.id,d.channel_name,c.work_status,c.order_permission
+        )m order by m.successAmount desc,m.totalAmount desc
+    </select>
+
+    <select id="reportForAgent" resultType="com.ruoyi.system.domain.vo.ReportForAgentVO">
+        SELECT n.user_id,n.user_name,m.balance as todayBalance,
+        m.yes_balance,n.parent_path,
+        totalCount,successCount,totalMoney,successMoney,merchantFee,
+        ifnull((SELECT sum(change_amount) from ct_merchant_amount_records r join  ct_merchant mr on mr.user_id = r.user_id
+        WHERE (r.change_type = 2)
+            and amount_type = 1
+            and mr.parent_path like concat(n.parent_path,'%')
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and r.create_time >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and r.create_time &lt;= #{dto.endTime}
+            </if>
+        ),0) as chargeMoney
+        FROM ct_merchant n
+        LEFT JOIN (SELECT SUBSTR(a.parent_path,1,locate('/',a.parent_path)-1) as merchant_id,
+        IFNULL(SUM( a.balance ),0) AS balance,
+        IFNULL(SUM( a.yes_balance ),0) AS yes_balance,
+        IFNULL(COUNT( b.id ),0) AS totalCount,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN 1 ELSE 0 END ),0) AS successCount,
+        IFNULL(sum( b.order_amount ),0) AS totalMoney,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN b.order_amount ELSE 0 END ),0) AS successMoney,
+        IFNULL(Round(sum( CASE WHEN b.order_status = 1 THEN b.order_amount * c.merchant_rate_one/100 ELSE 0 END ),2),0) AS merchantFee
+        FROM ct_merchant a
+        LEFT JOIN ct_in_order b on a.user_id = b.merchant_id
+        LEFT JOIN ct_in_order_detail c on b.id = c.order_id
+        <where>
+            <if test="dto.agentId != null">
+                and a.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and ifnull(b.finish_time,b.order_time) >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and ifnull(b.finish_time,b.order_time) &lt;= #{dto.endTime}
+            </if>
+        </where>
+        GROUP BY SUBSTR(a.parent_path,1,locate('/',a.parent_path)-1)
+        ) m on m.merchant_id = n.user_id
+        where merchant_level = 1
+        <if test="dto.agentId != null">
+            and n.agent_id = #{dto.agentId}
+        </if>
+        <if test="dto.merchantId != null">
+            and n.user_id = #{dto.merchantId}
+        </if>
+        <if test="dto.shopId != null">
+            and x.user_id = #{dto.shopId}
+        </if>
+        <if test="dto.merchantName != null and dto.merchantName != ''">
+            and n.user_name like concat('%', #{dto.merchantName},'%')
+        </if>
+        <if test="dto.shopName != null and dto.shopName != ''">
+            and x.user_name like concat('%', #{dto.shopName},'%')
+        </if>
+    </select>
+
+    <select id="reportByDate" resultType="com.ruoyi.system.domain.vo.ReportForAgentVO">
+        SELECT DATE_FORMAT(ifnull(b.finish_time,b.order_time),'%Y-%m-%d') as userName,
+               count(b.id) as totalCount,
+               IFNULL(sum( CASE WHEN b.order_status = 1 THEN 1 ELSE 0 END ),0) AS successCount,
+               IFNULL(sum( b.order_amount ),0) AS totalMoney,
+               IFNULL(sum( CASE WHEN b.order_status = 1 THEN b.order_amount ELSE 0 END ),0) AS successMoney
+        FROM ct_in_order b
+        join ct_in_order_detail a on b.id = a.order_id
+        <where>
+            <if test="dto.agentId != null">
+                and a.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.merchantId != null">
+                and b.merchant_id = #{dto.merchantId}
+            </if>
+            <if test="dto.shopId != null">
+                and a.shop_id = #{dto.shopId}
+            </if>
+            <if test="dto.merchantName != null and dto.merchantName != ''">
+                and b.merchant_name like concat('%', #{dto.merchantName},'%')
+            </if>
+            <if test="dto.shopName != null and dto.shopName != ''">
+                and a.shop_name like concat('%', #{dto.shopName},'%')
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and ifnull(b.finish_time,b.order_time) >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and ifnull(b.finish_time,b.order_time) &lt;= #{dto.endTime}
+            </if>
+        </where>
+        GROUP BY DATE_FORMAT(ifnull(b.finish_time,b.order_time),'%Y-%m-%d')
+    </select>
+
+    <select id="reportByChannel" resultType="com.ruoyi.system.domain.vo.ReportForAgentVO">
+        SELECT b.channel_id as userId,b.channel_name as userName,
+        count(b.id) as totalCount,
+        IFNULL(SUM( b.id ),0) AS totalCount,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN 1 ELSE 0 END ),0) AS successCount,
+        IFNULL(sum( b.order_amount ),0) AS totalMoney,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN b.order_amount ELSE 0 END ),0) AS successMoney
+        FROM ct_in_order b
+        join ct_in_order_detail a on b.id = a.order_id
+        <where>
+            <if test="dto.agentId != null">
+                and a.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.merchantId != null">
+                and b.merchant_id = #{dto.merchantId}
+            </if>
+            <if test="dto.shopId != null">
+                and a.shop_id = #{dto.shopId}
+            </if>
+            <if test="dto.merchantName != null and dto.merchantName != ''">
+                and b.merchant_name like concat('%', #{dto.merchantName},'%')
+            </if>
+            <if test="dto.shopName != null and dto.shopName != ''">
+                and a.shop_name like concat('%', #{dto.shopName},'%')
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and ifnull(b.finish_time,b.order_time) >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and ifnull(b.finish_time,b.order_time) &lt;= #{dto.endTime}
+            </if>
+        </where>
+        GROUP BY b.channel_id,b.channel_name
+    </select>
+
+    <select id="reportByShop" resultType="com.ruoyi.system.domain.vo.ReportForAgentVO">
+        SELECT a.shop_id as userId,a.shop_name as userName,
+        count(b.id) as totalCount,
+        IFNULL(SUM( b.id ),0) AS totalCount,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN 1 ELSE 0 END ),0) AS successCount,
+        IFNULL(sum( b.order_amount ),0) AS totalMoney,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN b.order_amount ELSE 0 END ),0) AS successMoney
+        FROM ct_in_order b
+        join ct_in_order_detail a on b.id = a.order_id
+        <where>
+            <if test="dto.agentId != null">
+                and a.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.merchantId != null">
+                and b.merchant_id = #{dto.merchantId}
+            </if>
+            <if test="dto.shopId != null">
+                and a.shop_id = #{dto.shopId}
+            </if>
+            <if test="dto.merchantName != null and dto.merchantName != ''">
+                and b.merchant_name like concat('%', #{dto.merchantName},'%')
+            </if>
+            <if test="dto.shopName != null and dto.shopName != ''">
+                and a.shop_name like concat('%', #{dto.shopName},'%')
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and ifnull(b.finish_time,b.order_time) >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and ifnull(b.finish_time,b.order_time) &lt;= #{dto.endTime}
+            </if>
+        </where>
+        GROUP BY a.shop_id,a.shop_name
+    </select>
+
+    <select id="reportForMerchant" resultType="com.ruoyi.system.domain.vo.ReportForAgentVO">
+        SELECT a.user_id,
+        IFNULL(COUNT( b.id ),0) AS totalCount,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN 1 ELSE 0 END ),0) AS successCount,
+        IFNULL(sum( b.order_amount ),0) AS totalMoney,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN b.order_amount ELSE 0 END ),0) AS successMoney
+        FROM ct_merchant a
+        JOIN ct_in_order b on a.user_id = b.merchant_id
+        where a.parent_path like concat(#{dto.childPathStart}, '%')
+            <if test="dto.agentId != null">
+                and a.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and ifnull(b.finish_time,b.order_time) >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and ifnull(b.finish_time,b.order_time) &lt;= #{dto.endTime}
+            </if>
+        GROUP BY a.user_id
+    </select>
+
+    <select id="getMerchantBalance" resultType="com.ruoyi.system.domain.vo.ReportForAgentVO">
+        SELECT SUBSTR(a.parent_path,1,locate('/',a.parent_path)-1) as userId,sum(balance) as todayBalance, sum(yes_balance) as yes_balance
+        FROM ct_merchant a
+        <where>
+            <if test="agentId != null">
+                and a.agent_id = #{agentId}
+            </if>
+        </where>
+        GROUP BY SUBSTR(a.parent_path,1,locate('/',a.parent_path)-1)
+    </select>
+
+    <select id="reportByChannelAndMerchant" resultType="com.ruoyi.system.domain.vo.ReportForAgentVO">
+        SELECT user_id,user_name,n.channelId,n.channelName,IFNULL(n.totalCount,0) totalCount,
+        IFNULL(n.totalMoney,0) totalMoney,IFNULL(n.successCount,0) successCount,IFNULL(n.successMoney,0) successMoney
+        FROM ct_merchant m LEFT JOIN (
+        SELECT SUBSTR(c.parent_path,1,locate('/',c.parent_path)-1) as merchantId,b.channel_id as channelId,b.channel_name as channelName,
+        IFNULL(count( b.id ),0) AS totalCount,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN 1 ELSE 0 END ),0) AS successCount,
+        IFNULL(sum( b.order_amount ),0) AS totalMoney,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN b.order_amount ELSE 0 END ),0) AS successMoney
+        FROM ct_merchant c
+        join ct_in_order b on c.user_id = b.merchant_id
+        join ct_in_order_detail a on b.id = a.order_id
+        <where>
+            <if test="dto.agentId != null">
+                and a.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and ifnull(b.finish_time,b.order_time) >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and ifnull(b.finish_time,b.order_time) &lt;= #{dto.endTime}
+            </if>
+        </where>
+        GROUP BY SUBSTR(c.parent_path,1,locate('/',c.parent_path)-1),b.channel_id,b.channel_name
+        ) n on m.user_id = n.merchantId
+        WHERE merchant_level = 1
+        and n.channelId is not null
+        <if test="dto.agentId != null">
+            and m.agent_id = #{dto.agentId}
+        </if>
+        <if test="dto.merchantId != null">
+            and m.merchant_id = #{dto.merchantId}
+        </if>
+        <if test="dto.merchantName != null and dto.merchantName != ''">
+            and m.merchant_name like concat('%', #{dto.merchantName},'%')
+        </if>
+        <if test="dto.childPathStart != null and dto.childPathStart != ''">
+            and m.parent_path like concat(#{dto.childPathStart}, '%')
+        </if>
+        order by IFNULL(n.successMoney,0) desc
+    </select>
+
+    <select id="commissionList" resultType="com.ruoyi.system.domain.vo.CommissionVO">
+        SELECT a.merchant_id,a.merchant_name,merchant_rate,channel_id,channel_name,merchant_rate_one as dianwei,
+            merchant_rate_one,merchant_rate_two,merchant_rate_three,merchant_rate_four,merchant_rate_five,c.parent_path,
+        count(a.id) as totalCount,
+        SUM(order_amount) as totalAmount,
+        ifnull(sum(commisionFeeOne),0) commissionOne,ifnull(sum(commisionFeeTwo),0) commissionTwo,
+        ifnull(sum(commisionFeeThree),0) commissionThree,ifnull(sum(commisionFeeFour),0) commissionFour,
+        ifnull(sum(commisionFeeFive),0) commissionFive,
+        round((merchant_rate_one - merchant_rate_two ), 2 ) AS commissionOneRate,
+        round(( merchant_rate_two - merchant_rate_three ), 2 ) AS commissionTwoRate,
+        round(( merchant_rate_three - merchant_rate_four ), 2 ) AS commissionThreeRate,
+        round(( merchant_rate_four - merchant_rate_five ), 2 ) AS commissionFourRate,
+        ifnull(case WHEN c.merchant_level = 1 THEN sum(commisionFeeOne)
+        WHEN c.merchant_level = 2 THEN sum(commisionFeeTwo)
+        WHEN c.merchant_level = 3 THEN sum(commisionFeeThree)
+        WHEN c.merchant_level = 4 THEN sum(commisionFeeFour)
+        WHEN c.merchant_level = 5 THEN sum(commisionFeeFive)
+        ELSE 0 END,0) AS myCommission
+        FROM ct_in_order a
+        JOIN ct_in_order_detail b on a.id = b.order_id
+        JOIN ct_merchant c on a.merchant_id = c.user_id
+        LEFT JOIN (SELECT order_no ,sum(commisionFeeOne)commisionFeeOne,sum(commisionFeeTwo)commisionFeeTwo,
+        sum(commisionFeeThree)commisionFeeThree,sum(commisionFeeFour)commisionFeeFour,sum(commisionFeeFive)commisionFeeFive
+        FROM(SELECT r.order_no,
+        case when p.merchant_level = 1 then r.change_amount else 0 END as commisionFeeOne,
+        case when p.merchant_level = 2 then r.change_amount else 0 END as commisionFeeTwo,
+        case when p.merchant_level = 3 then r.change_amount else 0 END as commisionFeeThree,
+        case when p.merchant_level = 4 then r.change_amount else 0 END as commisionFeeFour,
+        case when p.merchant_level = 5 then r.change_amount else 0 END as commisionFeeFive
+        FROM  ct_merchant_amount_records r
+        JOIN ct_merchant p on r.user_id = p.user_id
+        WHERE r.amount_type = 2
+        AND r.change_type = 1
+        <if test="dto.agentId != null">
+            AND r.agent_id = #{dto.agentId}
+        </if>
+        <if test="dto.startTime != null and dto.startTime != ''">
+            AND r.create_time >= #{dto.startTime}
+        </if>
+        <if test="dto.endTime != null and dto.endTime != ''">
+            AND r.create_time &lt;= #{dto.endTime}
+        </if>
+        )com
+        GROUP BY order_no
+        )ss on a.trade_no = ss.order_no
+        WHERE a.order_status = 1
+        <if test="dto.agentId != null">
+            and b.agent_id = #{dto.agentId}
+        </if>
+        <if test="dto.startTime != null and dto.startTime != ''">
+            and ifnull(a.finish_time,a.order_time) >= #{dto.startTime}
+        </if>
+        <if test="dto.endTime != null and dto.endTime != ''">
+            and ifnull(a.finish_time,a.order_time) &lt;= #{dto.endTime}
+        </if>
+        <if test="dto.merchantId != null">
+            and a.merchant_id = #{dto.merchantId}
+        </if>
+        <if test="dto.merchantName != null and dto.merchantName != ''">
+            and a.merchant_name like concat('%', #{dto.merchantName},'%')
+        </if>
+        <if test="dto.childPathStart != null and dto.childPathStart != ''">
+            and c.parent_path like concat(#{dto.childPathStart}, '%')
+        </if>
+        <if test="dto.neMerchantId != null">
+            and a.merchant_id != #{dto.neMerchantId}
+        </if>
+        <if test="dto.channelId != null">
+            and a.channel_id = #{dto.channelId}
+        </if>
+        GROUP BY a.merchant_id,a.merchant_name,c.parent_path,c.merchant_level,merchant_rate,channel_id,channel_name,merchant_rate_one,merchant_rate_two,merchant_rate_three,merchant_rate_four,merchant_rate_five
+    </select>
+
+    <select id="allMerchantReport" resultType="com.ruoyi.system.domain.vo.ReportForAgentVO">
+        SELECT n.user_id,n.user_name,x.user_id as shop_id,x.user_name as shop_name,m.balance as todayBalance,
+        m.yes_balance,n.parent_path,
+        totalCount,successCount,totalMoney,successMoney,merchantFee,
+        ifnull((SELECT sum(change_amount) from ct_merchant_amount_records r join  ct_merchant mr on mr.user_id = r.user_id
+        WHERE (r.change_type = 2 or r.change_type = 3)
+        and amount_type = 1
+        and notes not like '%佣金转移%'
+        and mr.user_id = n.user_id
+        <if test="dto.startTime != null and dto.startTime != ''">
+            and r.create_time >= #{dto.startTime}
+        </if>
+        <if test="dto.endTime != null and dto.endTime != ''">
+            and r.create_time &lt;= #{dto.endTime}
+        </if>
+        ),0) as chargeMoney
+        FROM ct_merchant n
+        JOIN ct_shop_merchant_relation k on k.merchant_id = n.user_id
+        JOIN ct_shop x on x.user_id = k.shop_id
+        LEFT JOIN (SELECT a.user_id as merchant_id,
+        IFNULL(SUM( a.balance ),0) AS balance,
+        IFNULL(SUM( a.yes_balance ),0) AS yes_balance,
+        IFNULL(COUNT( b.id ),0) AS totalCount,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN 1 ELSE 0 END ),0) AS successCount,
+        IFNULL(sum( b.order_amount ),0) AS totalMoney,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN b.order_amount ELSE 0 END ),0) AS successMoney,
+        IFNULL(Round(sum( CASE WHEN b.order_status = 1 THEN b.order_amount * c.merchant_rate_one/100 ELSE 0 END ),2),0) AS merchantFee
+        FROM ct_merchant a
+        LEFT JOIN ct_in_order b on a.user_id = b.merchant_id
+        LEFT JOIN ct_in_order_detail c on b.id = c.order_id
+        <where>
+            <if test="dto.agentId != null">
+                and a.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and ifnull(b.finish_time,b.order_time) >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and ifnull(b.finish_time,b.order_time) &lt;= #{dto.endTime}
+            </if>
+        </where>
+        GROUP BY a.user_id
+        ) m on m.merchant_id = n.user_id
+        where parent_path like '10062/%'
+        <if test="dto.agentId != null">
+            and n.agent_id = #{dto.agentId}
+        </if>
+        <if test="dto.merchantId != null">
+            and n.user_id = #{dto.merchantId}
+        </if>
+        <if test="dto.shopId != null">
+            and x.user_id = #{dto.shopId}
+        </if>
+        <if test="dto.merchantName != null and dto.merchantName != ''">
+            and n.user_name like concat('%', #{dto.merchantName},'%')
+        </if>
+        <if test="dto.shopName != null and dto.shopName != ''">
+            and x.user_name like concat('%', #{dto.shopName},'%')
+        </if>
+    </select>
+
+    <select id="reportHomeForMerchant" resultType="com.ruoyi.system.domain.vo.ReportForAgentVO">
+        SELECT m.user_id,m.user_name,m.parent_id,m.parent_path,m.merchant_level,ifnull(chargeMoney,0)as chargeMoney,
+        m.balance as todayBalance,m.yes_balance,
+        IFNULL(n.totalCount,0) as totalCount,IFNULL(n.successCount,0) as successCount,IFNULL(n.totalMoney,0) as totalMoney,IFNULL(n.successMoney,0) as successMoney,
+        ifnull((case when #{dto.merchantLevel} = 1 then merchantFeeOne
+        when #{dto.merchantLevel} = 2 then merchantFeeTwo
+        when #{dto.merchantLevel} = 3 then merchantFeeThree
+        when #{dto.merchantLevel} = 4 then merchantFeeFour
+        when #{dto.merchantLevel} = 5 then merchantFeeFive
+        END),0) as merchantFee
+        FROM ct_merchant m
+        LEFT JOIN(SELECT a.user_id,
+        ifnull(r.chargeMoney,0) as chargeMoney ,
+        IFNULL(count( b.id ),0) AS totalCount,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN 1 ELSE 0 END ),0) AS successCount,
+        IFNULL(sum( b.order_amount ),0) AS totalMoney,
+        IFNULL(sum( CASE WHEN b.order_status = 1 THEN b.order_amount ELSE 0 END ),0) AS successMoney,
+        IFNULL(Round(sum( CASE WHEN b.order_status = 1 THEN b.order_amount * c.merchant_rate_one/100 ELSE 0 END ),2),0) AS merchantFeeOne,
+        IFNULL(Round(sum( CASE WHEN b.order_status = 1 THEN b.order_amount * c.merchant_rate_two/100 ELSE 0 END ),2),0) AS merchantFeeTwo,
+        IFNULL(Round(sum( CASE WHEN b.order_status = 1 THEN b.order_amount * c.merchant_rate_three/100 ELSE 0 END ),2),0) AS merchantFeeThree,
+        IFNULL(Round(sum( CASE WHEN b.order_status = 1 THEN b.order_amount * c.merchant_rate_four/100 ELSE 0 END ),2),0) AS merchantFeeFour,
+        IFNULL(Round(sum( CASE WHEN b.order_status = 1 THEN b.order_amount * c.merchant_rate_five/100 ELSE 0 END ),2),0) AS merchantFeeFive
+        FROM ct_merchant a
+        LEFT JOIN ct_in_order b on a.user_id = b.merchant_id
+        LEFT JOIN ct_in_order_detail c on b.id = c.order_id
+        LEFT JOIN (
+            SELECT user_id,sum(change_amount) as chargeMoney from ct_merchant_amount_records r WHERE r.change_type = 3
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and create_time >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and create_time &lt;= #{dto.endTime}
+            </if>
+            GROUP BY user_id
+        ) r on r.user_id = a.user_id
+        <where>
+            <if test="dto.agentId != null">
+                and a.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and ifnull(b.finish_time,b.order_time) >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and ifnull(b.finish_time,b.order_time) &lt;= #{dto.endTime}
+            </if>
+        </where>
+        GROUP BY a.user_id
+        )n on m.user_id = n.user_id
+        where m.parent_path like concat(#{dto.childPathStart},'%')
+        <if test="dto.merchantId != null">
+            and m.user_id = #{dto.merchantId}
+        </if>
+        <if test="dto.merchantName != null and dto.merchantName != ''">
+            and m.user_name like concat('%', #{dto.merchantName},'%')
+        </if>
+    </select>
+
+    <select id="queryOrderListNoPage" resultType="com.ruoyi.system.domain.vo.OrderVO">
+        SELECT a.*,b.*,c.parent_path,c.merchant_level
+        FROM ct_in_order a
+        JOIN ct_in_order_detail b on a.id = b.order_id
+        left join ct_merchant c on c.user_id = a.merchant_id
+        <where>
+            <if test="dto.agentId != null">
+                and b.agent_id = #{dto.agentId}
+            </if>
+            <if test="dto.agentName != null and dto.agentName != ''">
+                and b.agent_name like concat('%',#{dto.agentName},'%')
+            </if>
+            <if test="dto.shopId != null">
+                and b.shop_id = #{dto.shopId}
+            </if>
+            <if test="dto.shopName != null and dto.shopName != ''">
+                and b.shop_name like concat('%',#{dto.shopName},'%')
+            </if>
+            <if test="dto.merchantId != null">
+                and a.merchant_id = #{dto.merchantId}
+            </if>
+            <if test="dto.merchantName != null and dto.merchantName != ''">
+                and a.merchant_name like concat('%',#{dto.merchantName},'%')
+            </if>
+            <if test="dto.channelId != null">
+                and a.channel_id = #{dto.channelId}
+            </if>
+            <if test="dto.channelName != null and dto.channelName != ''">
+                and a.channel_name like concat('%',#{dto.channelName},'%')
+            </if>
+            <if test="dto.shopOrderNo != null and dto.shopOrderNo != ''">
+                and a.shop_order_no like concat('%',#{dto.shopOrderNo},'%')
+            </if>
+            <if test="dto.tradeNo != null and dto.tradeNo != ''">
+                and a.trade_no like concat('%',#{dto.tradeNo},'%')
+            </if>
+            <if test="dto.orderStatus != null">
+                and a.order_status = #{dto.orderStatus}
+            </if>
+            <if test="dto.callbackStatus != null">
+                and a.callback_status = #{dto.callbackStatus}
+            </if>
+            <if test="dto.startTime != null and dto.startTime != ''">
+                and a.order_time >= #{dto.startTime}
+            </if>
+            <if test="dto.endTime != null and dto.endTime != ''">
+                and a.order_time &lt;= #{dto.endTime}
+            </if>
+            <if test="dto.childIds != null and dto.childIds.size() > 0">
+                and a.merchant_id in
+                <foreach collection="dto.childIds" item="item" separator="," open="(" close=")">
+                    #{item}
+                </foreach>
+                and a.merchant_id != #{dto.selftMerchantId}
+            </if>
+            <if test="dto.parentMerchantName != null and dto.parentMerchantName != ''">
+                and c.parent_path like concat(#{dto.parentMerchantName}, '%')
+            </if>
+        </where>
+        order by a.id desc
+    </select>
+
+    <select id="sumBalanceOfMerchant" resultType="java.math.BigDecimal">
+        SELECT ROUND((sum(balance) + SUM(freeze_amount)),2) as balance
+        FROM ct_merchant
+        WHERE agent_id = #{agentId}
+    </select>
+</mapper>

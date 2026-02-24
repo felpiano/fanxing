@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.ShopAmountRecordsMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.ruoyi.system.domain.business.ShopAmountRecordsEntity">
+        <id column="id" property="id" />
+        <result column="user_id" property="userId" />
+        <result column="change_type" property="changeType" />
+        <result column="before_amount" property="beforeAmount" />
+        <result column="after_amount" property="afterAmount" />
+        <result column="change_amount" property="changeAmount" />
+        <result column="create_time" property="createTime" />
+        <result column="order_no" property="orderNo" />
+        <result column="notes" property="notes" />
+        <result column="remarks" property="remarks" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, user_id, change_type, before_amount, after_amount, change_amount, create_time, order_no, notes, remarks
+    </sql>
+
+</mapper>

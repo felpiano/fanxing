@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.ShopMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.ruoyi.system.domain.business.ShopEntity">
+        <id column="user_id" property="userId" />
+        <result column="user_name" property="userName" />
+        <result column="login_password" property="loginPassword" />
+        <result column="agent_id" property="agentId" />
+        <result column="shop_name" property="shopName" />
+        <result column="telegram" property="telegram" />
+        <result column="telegram_group_id" property="telegramGroupId" />
+        <result column="google_secret_flag" property="googleSecretFlag" />
+        <result column="google_secret" property="googleSecret" />
+        <result column="safe_code" property="safeCode" />
+        <result column="proxy_payment_notes" property="proxyPaymentNotes" />
+        <result column="proxy_payment_flag" property="proxyPaymentFlag" />
+        <result column="verification_flag" property="verificationFlag" />
+        <result column="wthdrawal_fee" property="wthdrawalFee" />
+        <result column="status" property="status" />
+        <result column="balance" property="balance" />
+        <result column="create_by" property="createBy" />
+        <result column="white_login_ip" property="whiteLoginIp" />
+        <result column="last_login_ip" property="lastLoginIp" />
+        <result column="last_login_time" property="lastLoginTime" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+        <result column="update_by" property="updateBy" />
+        <result column="del_flag" property="delFlag" />
+        <result column="enter_order" property="enterOrder" />
+        <result column="min_amount" property="minAmount" />
+        <result column="max_amount" property="maxAmount" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        user_id, user_name, login_password, agent_id, shop_name, telegram, telegram_group_id, google_secret_flag, google_secret, safe_code, proxy_payment_notes, proxy_payment_flag, verification_flag, wthdrawal_fee, `status`, balance, create_by, white_login_ip, last_login_ip, last_login_time, create_time, update_time, update_by, del_flag, enter_order, min_amount, max_amount
+    </sql>
+
+</mapper>

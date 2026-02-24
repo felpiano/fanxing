@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.MerchantHistoryBalanceMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.ruoyi.system.domain.business.MerchantHistoryBalanceEntity">
+        <id column="id" property="id" />
+        <id column="user_id" property="userId" />
+        <result column="user_name" property="userName" />
+        <result column="data_dt" property="dataDt" />
+        <result column="balance" property="balance" />
+        <result column="freeze_amount" property="freezeAmount" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        user_id, user_name, data_dt, balance
+    </sql>
+
+    <select id="totalBalanceByParentPath" resultType="com.ruoyi.system.domain.business.MerchantHistoryBalanceEntity">
+        SELECT
+        IFNULL((SELECT sum(r.after_amount)
+        FROM (SELECT max(id) as id, user_id FROM ct_merchant_amount_records
+        WHERE create_time  &lt;= concat(#{dataDt},' 23:59:59')
+        AND amount_type  = 1
+        GROUP BY user_id
+        )a
+        JOIN ct_merchant_amount_records r on r.id = a.id
+        JOIN ct_merchant b on r.user_id = b.user_id
+        WHERE b.parent_path like concat(#{parentPath},'%')
+        ORDER BY a.user_id,r.amount_type),0)
+        +
+        IFNULL((SELECT sum(r.after_amount)
+        FROM (SELECT max(id) as id, user_id FROM ct_merchant_amount_records
+        WHERE create_time  &lt;= concat(#{dataDt},' 23:59:59')
+        AND amount_type  = 2
+        GROUP BY user_id
+        )a
+        JOIN ct_merchant_amount_records r on r.id = a.id
+        JOIN ct_merchant b on r.user_id = b.user_id
+        WHERE b.parent_path like concat(#{parentPath},'%')
+        ORDER BY a.user_id,r.amount_type),0)
+        as balance , 0 as freezeAmount
+
+    </select>
+
+    <select id="init" resultMap="BaseResultMap">
+        SELECT
+            m.*
+        FROM(
+            SELECT a.user_id,a.user_name,#{dataDt} as data_dt,IFNULL(c.balance,0) as balance,IFNULL(d.balance,0) as freeze_amount
+            FROM
+            ct_merchant a
+            left join (SELECT user_id,sum(change_amount) as balance FROM ct_merchant_amount_records b
+            WHERE amount_type = 1 and  b.create_time &lt;= #{endDate} GROUP BY user_id)c ON c.user_id = a.user_id
+            left join (SELECT user_id,sum(change_amount) as balance FROM ct_merchant_amount_records b
+                       WHERE amount_type = 2 and b.create_time &lt;= #{endDate} GROUP BY user_id)d ON d.user_id = a.user_id
+            GROUP BY a.user_id,a.user_name
+            ) m
+        LEFT JOIN ct_merchant_history_balance n ON m.data_dt = n.data_dt AND m.user_id = n.user_id
+        WHERE n.id is null
+    </select>
+
+    <select id="totalBalanceByUserId" resultMap="BaseResultMap">
+        SELECT
+            IFNULL((SELECT sum(r.after_amount)
+                    FROM (SELECT max(id) as id, user_id FROM ct_merchant_amount_records
+                          WHERE create_time  &lt;= concat(#{dataDt},' 23:59:59')
+                            AND amount_type  = 1
+                          GROUP BY user_id
+                         )a
+                             JOIN ct_merchant_amount_records r on r.id = a.id
+                             JOIN ct_merchant b on r.user_id = b.user_id
+                    WHERE b.user_id = #{userId}
+                    ORDER BY a.user_id,r.amount_type),0)
+                +
+            IFNULL((SELECT sum(r.after_amount)
+                    FROM (SELECT max(id) as id, user_id FROM ct_merchant_amount_records
+                          WHERE create_time  &lt;= concat(#{dataDt},' 23:59:59')
+                            AND amount_type  = 2
+                          GROUP BY user_id
+                         )a
+                             JOIN ct_merchant_amount_records r on r.id = a.id
+                             JOIN ct_merchant b on r.user_id = b.user_id
+                    WHERE b.user_id = #{userId}
+                    ORDER BY a.user_id,r.amount_type),0)
+                as balance , 0 as freezeAmount
+    </select>
+
+    <select id="totalBalanceBroupByUserId" resultMap="BaseResultMap">
+        SELECT user_id,sum(after_amount)as balance FROM (
+        SELECT r.user_id,r.after_amount
+        FROM (SELECT max(id) as id, user_id FROM ct_merchant_amount_records
+        WHERE create_time &lt;= concat(#{dataDt},' 23:59:59')
+        AND amount_type  =1
+        GROUP BY user_id
+        )a
+        JOIN ct_merchant_amount_records r on r.id = a.id
+        UNION ALL
+        SELECT r.user_id,r.after_amount
+        FROM (SELECT max(id) as id, user_id FROM ct_merchant_amount_records
+        WHERE create_time &lt;= concat(#{dataDt},' 23:59:59')
+        AND amount_type  = 2
+        GROUP BY user_id
+        )a
+        JOIN ct_merchant_amount_records r on r.id = a.id)m
+        GROUP BY user_id
+    </select>
+
+    <select id="balanceBroupByUserId" resultMap="BaseResultMap">
+        SELECT r.user_id,r.after_amount as balance
+        FROM (SELECT max(id) as id, user_id FROM ct_merchant_amount_records
+              WHERE create_time &lt;= concat(#{dataDt},' 23:59:59')
+                AND amount_type  = 1
+              GROUP BY user_id
+             )a
+                 JOIN ct_merchant_amount_records r on r.id = a.id
+    </select>
+</mapper>

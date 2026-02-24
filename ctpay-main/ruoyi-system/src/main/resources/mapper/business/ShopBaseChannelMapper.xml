@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.ShopBaseChannelMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.ruoyi.system.domain.business.ShopBaseChannelEntity">
+        <id column="id" property="id" />
+        <result column="shop_id" property="shopId" />
+        <result column="channel_id" property="channelId" />
+        <result column="channel_rate" property="channelRate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id, shop_id, channel_id, channel_rate
+    </sql>
+
+    <select id="listByShopId" resultType="com.ruoyi.system.domain.business.ShopBaseChannelEntity">
+        SELECT a.id,a.shop_id,a.channel_id,b.channel_code,b.channel_name,a.`status`,a.channel_rate
+        FROM ct_shop_base_channel a
+        JOIN ct_channel b on a.channel_id = b.id
+        WHERE b.del_flag = 0
+        AND b.`status` = 0
+        AND a.shop_id = #{shopId}
+    </select>
+</mapper>

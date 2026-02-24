@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="renderer" content="webkit">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>收银台</title>
+  <script>
+    const randomNum = Math.random().toString(36).substring(7);
+    document.write('<link rel="stylesheet" href="css/index.css?v=' + randomNum + '">');
+    document.write('<link rel="stylesheet" href="css/cnyNumber.css?v=' + randomNum + '">');
+  </script>
+  <script src="js/vue.js"></script>
+  <script src="js/axios.min.js"></script>
+  <script src="js/request_03.js"></script>
+  <script src="js/jquery.js"></script>
+  <script src="js/clipboard.min.js"></script>
+  <style>
+    .container-top {
+      padding-top: 20px
+    }
+    .pay-section {
+      justify-content: flex-start;
+    }
+    .pay-section > p {
+      color: #333;
+    }
+    .hg-border{
+      height: 1px;
+      width: 80%;
+      margin: auto;
+      border: 1px solid #FED500
+    }
+    .number-qrcode {
+      padding: 20px;
+    }
+    .number-qrcode-text {
+      font-size: 18px;
+      font-weight: 700;
+      text-align: center;
+      padding-bottom: 8px
+    }
+    .progress {
+      height: 20px;
+      margin-bottom: 20px;
+      overflow: hidden;
+      background-color: #f5f5f5;
+      border-radius: 4px;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, .1);
+    }
+    .progress-bar {
+      float: left;
+      height: 100%;
+      width: 100%;
+      min-width: 2%;
+      font-size: 12px;
+      line-height: 20px;
+      color: #fff;
+      text-align: center;
+      box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .15);
+      transition: width .6s ease;
+      animation: progress-bar-stripes 2s linear infinite;
+    }
+    .progress-bar-success {
+      background-color: #5cb85c;
+    }
+    .progress-bar-striped, .progress-striped .progress-bar {
+      background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+      background-size: 40px 40px;
+    }
+
+    @keyframes progress-bar-stripes {
+      0% {
+        background-position: 40px 0;
+      }
+      100% {
+        background-position: 0 0;
+      }
+    }
+
+    .number-qrcode-div {
+      height: 168px
+    }
+  </style>
+</head>
+<body>
+<div id="app" v-cloak class="cny-number">
+  <div v-if="orderInfo.orderStatus == -1"></div>
+  <div class="cny-number_main" v-else-if="orderInfo.orderStatus === 0">
+    <div class="container-top">
+      <div class="flex-center pay-section">
+        <p>订单号：</p>
+        <div class="flex-center " :data-clipboard-text="orderInfo.tradeNo" @click="clipboard('tradeNo', '订单号')">
+          <p style="padding: 0 10px">{{orderInfo.tradeNo}}</p>
+          <div class="copy-div">
+            <img src="images/copy.png" alt="copy"/>
+          </div>
+        </div>
+      </div>
+      <div class="flex-center pay-section">
+        <p>金额:</p>
+        <div class="flex-center">
+          <p style="padding: 0 10px; font-size: 30px; color: #136aba; font-weight: 700">{{orderInfo.fixedAmount}}</p>
+          CNY
+        </div>
+      </div>
+      <div class="hg-border"></div>
+      <div class="number-qrcode">
+        <p class="number-qrcode-text">请稍后正在分配收款账号...</p>
+        <div class="progress">
+          <div class="progress-bar progress-bar-success progress-bar-striped active" id="pb02" role="progressbar" aria-valuenow="2" aria-valuemin="0" aria-valuemax="100">
+            {{progress}}秒
+          </div>
+        </div>
+        <div class="number-qrcode-div"></div>
+        <p style="color: red; font-size: 22px; font-weight: 700"></p>
+      </div>
+      <!--<div class="flex-center count-dowm-div warn-msg">
+        <p>请在</p>
+        <div class="count-dowm">{{countDown.m}}分{{countDown.s}}秒</div>
+        <p>之内完成支付</p>
+      </div>-->
+    </div>
+
+    <!--<div class="container-bottom">
+      <div class="warn-title">注意事项：</div>
+      <div class="warn-msg">
+        1.支付时间以显示时间为准,超时支付不退不补!
+        <br/>
+        2.此码只限本次使用,重复支付无效
+        <br/>
+        3.请支付正确金额,请勿改变金额付款,不退不补!
+        <br/>
+      </div>
+    </div>-->
+  </div>
+  <div v-else>
+    <p class="order-end" v-if="orderInfo.orderStatus === 1">订单已经支付成功了噢～</p>
+    <p class="order-end" v-else-if="orderInfo.orderStatus === 2">
+      当前订单已超时!<br/>
+      如果你还没有付款, 重新创建新的订单即可~
+    </p>
+  </div>
+
+  <div class="dialog-div" v-if="isVisible">
+    <div class="dialog-div_box">
+      <div class="dialog-div_body font-weight">
+        <p class="dialog-title"> 请先输入付款人真实姓名 </p>
+        <p class="red text-center font-16"> 请正确填写付款人姓名:</p>
+        <input type="text" v-model="payer" class="input-userName" placeholder="请输入付款人姓名">
+      </div>
+      <div class="dialog-div_footer">
+        <button class="btn-primary" @click="submitOrder">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!--loading-->
+  <div class="dialog-div modal-loading" v-show="loading">
+    <div>
+      <img src="images/loading.gif" alt="">
+      <p>正在加载中...</p>
+    </div>
+  </div>
+
+  <!--toast-->
+  <div class="toast" v-show="toastShow">
+    <p>{{ toastText }}</p>
+  </div>
+
+</div>
+
+</body>
+<script>
+  new Vue({
+    el: '#app',
+    data(){
+      return {
+        loading: true,
+        toastText: '',
+        toastShow: false,
+        isVisible: false,
+        orderInfo: {
+          tradeNo: '',
+          fixedAmount: 0,
+          guidance: '',
+          nickName: '',
+          accountNumber: '',
+          showChannel: 0,
+          orderStatus: -1
+        },
+        payer: '',
+        countDown: {
+          m: 0,
+          s: 0
+        },
+        progress: 60,
+        pcent: 100
+      }
+    },
+    created() {
+      const query = getUrlParam(window.location.href)
+      if (JSON.stringify(query) !== '{}') {
+        this.getOrderInfo(query)
+      } else {
+        this.loading = false
+      }
+    },
+    methods: {
+      getOrderInfo(query) {
+        if (!query.orderNo) {
+          this.loading = false
+          return
+        }
+        axios.get(API_URL.getOrderData, {
+          params: {
+            tradeNo: query.orderNo
+          }
+        }).then(res => {
+          if (res.status === 200) {
+            if (res.data.code !== 200) {
+              this.setToast(res.data.msg)
+              this.loading = false
+              return
+            }
+            const orderData = res.data.data || {}
+            if (JSON.stringify(orderData) === '{}') {
+              this.setToast('获取订单信息失败')
+              this.loading = false
+              return
+            }
+            this.loading = false
+            if (orderData.orderStatus !== 0 ) {
+              this.orderInfo.orderStatus = orderData.orderStatus
+              return
+            }
+
+            const merchantQrcode = orderData.merchantQrcode || {}
+            if (JSON.stringify(merchantQrcode) === '{}') {
+              this.setToast('通道码异常，请重新下单～')
+              return
+            }
+            this.countDownFun(orderData)
+            const agentChannel = orderData.agentChannel || {}
+            // if (agentChannel.payurlUser === 1) {
+            //   this.isVisible = false
+            // } else {
+            //   this.isVisible = true
+            // }
+
+            this.orderInfo = {
+              tradeNo: orderData.tradeNo,
+              fixedAmount: orderData.fixedAmount,
+              guidance: agentChannel.guidance,
+              nickName: merchantQrcode.nickName,
+              accountNumber: merchantQrcode.accountNumber,
+              orderStatus: orderData.orderStatus,
+              uid: orderData.uid
+            }
+            this.showProgress()
+          } else {
+            this.loading = false
+            this.setToast('获取订单信息失败')
+          }
+        }).catch(() => {
+          this.loading = false
+          this.setToast('获取订单信息失败')
+        })
+      },
+      submitOrder() {
+        if (!this.payer) {
+          this.setToast('请输入付款人姓名')
+          return
+        }
+        if (!/^[\u4e00-\u9fa5]+$/.test(this.payer)) {
+          this.setToast('付款人姓名只能输入中文噢～')
+          return
+        }
+        this.isVisible = false
+        // axios.get(API_URL.setOrderPayer, {
+        //   params: {
+        //     tradeNo: this.orderInfo.tradeNo,
+        //     payer: this.payer
+        //   }
+        // }).then(res => {
+        //   if (res.status === 200) {
+        //     if (res.data.code !== 200) {
+        //       this.setToast(res.data.msg)
+        //       return
+        //     }
+        //     this.isVisible = false
+        //   } else {
+        //     this.setToast('提交失败')
+        //   }
+        // }).catch(() => {
+        //   this.setToast('提交失败')
+        // })
+      },
+      countDownFun(data) {
+        // 倒计时
+        const orderTime = new Date(data.orderTime).getTime()
+        const nowTime = new Date().getTime()
+        let countDownTime = (data.overtime * 60 * 1000) - (nowTime - orderTime)
+        const timer = setInterval(() => {
+          if (countDownTime <= 0) {
+            clearInterval(timer)
+            return
+          }
+          this.countDown.m = Math.floor(countDownTime / 1000 / 60)
+          this.countDown.s = Math.floor(countDownTime / 1000 % 60)
+          countDownTime -= 1000
+        }, 1000)
+      },
+      clipboard(className, text) {
+        let clipboard = new ClipboardJS('.' + className);
+        clipboard.on('success', (e) => {
+          this.setToast(text + '复制成功')
+        });
+        clipboard.on('error', (e) => {
+          this.setToast(text + '复制失败')
+        });
+        // navigator.clipboard.writeText(text).then(() => {
+        //   this.setToast('复制成功')
+        // }, (err) => {
+        //   console.log(err)
+        // })
+      },
+      setToast(text) {
+        this.toastText = text
+        this.toastShow = true
+        setTimeout(() => {
+          this.toastShow = false
+        }, 2000)
+      },
+      showProgress() {
+        let timer = setInterval(() => {
+          this.progress--
+          this.pcent -= 1.6
+          $("#pb02").css("width", this.pcent + "%");
+          if (this.progress < 1) {
+            this.progress = 0
+            this.pcent = 100
+            clearInterval(timer)
+            timer = null
+            setTimeout(() => {
+              this.again()
+            }, 1000)
+          }
+        }, 1000)
+      },
+      again() {
+        this.pcent = 100
+        this.progress = 60
+        $("#pb02").css("width", this.pcent + "%");
+        this.showProgress()
+      }
+    }
+  })
+</script>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="renderer" content="webkit">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+     <link rel="icon" href="<%= BASE_URL %>logo.png">
+    <title><%= webpackConfig.name %></title>
+    <!--[if lt IE 11]><script>window.location.href='/html/ie.html';</script><![endif]-->
+	<style>
+    .preload__wrap {
+			display: flex;
+			flex-direction: column;
+			letter-spacing: 1px;
+			background-color: #1e3c57;
+			position: fixed;
+			left: 0;
+			top: 0;
+			height: 100%;
+			width: 100%;
+			z-index: 9999;
+			transition: all 0.3s ease-in;
+			opacity: 1;
+			pointer-events: none;
+		}
+
+		.preload__wrap.is-hide {
+			opacity: 0;
+		}
+
+		.preload__container {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			flex-direction: column;
+			width: 100%;
+			user-select: none;
+			-webkit-user-select: none;
+			flex-grow: 1;
+		}
+
+		.preload__title {
+			color: #fff;
+			font-size: 14px;
+			margin: 30px 0 20px 0;
+		}
+
+		.preload__sub-title {
+			color: #ababab;
+			font-size: 12px;
+		}
+
+		.preload__loading {
+			height: 30px;
+			width: 30px;
+			border-radius: 30px;
+			border: 7px solid currentColor;
+			border-bottom-color: #2f3447 !important;
+			position: relative;
+			animation:
+				r 1s infinite cubic-bezier(0.17, 0.67, 0.83, 0.67),
+				bc 2s infinite ease-in;
+			transform: rotate(0deg);
+		}
+
+		@keyframes r {
+			from {
+				transform: rotate(0deg);
+			}
+
+			to {
+				transform: rotate(360deg);
+			}
+		}
+
+		.preload__loading::after,
+		.preload__loading::before {
+			content: "";
+			display: inline-block;
+			position: absolute;
+			bottom: -2px;
+			height: 5px;
+			width: 5px;
+			border-radius: 10px;
+			background-color: currentColor;
+		}
+
+		.preload__loading::after {
+			left: -1px;
+		}
+
+		.preload__loading::before {
+			right: -1px;
+		}
+
+		@keyframes bc {
+			0% {
+				color: #689cc5;
+			}
+
+			25% {
+				color: #b3b7e2;
+			}
+
+			50% {
+				color: #93dbe9;
+			}
+
+			75% {
+				color: #abbd81;
+			}
+
+			100% {
+				color: #689cc5;
+			}
+		}
+
+
+  	</style>
+  </head>
+  <body>
+    <div id="app">
+      <div class="preload__wrap" id="Loading">
+        <div class="preload__container">
+          <div class="preload__loading"></div>
+          <p class="preload__title">正在加载资源...</p>
+          <p class="preload__sub-title">初次加载资源可能需要较多时间 请耐心等待</p>
+          <p class="preload__sub-title">若长时间未响应，请强制刷新页面</p>
+        </div>
+      </div>
+	</div>
+  </body>
+</html>
+<script src="./js/jquery.min.js"></script>
+<!--<script src="./js/ban.js"></script>-->

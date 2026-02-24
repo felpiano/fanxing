@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+		<meta name="renderer" content="webkit" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+		<title>CASHIER</title>
+		<link rel="stylesheet" href="css/index_0331.css"/>
+		<script src="js/vue.js"></script>
+		<script src="js/axios.min.js"></script>
+		<script src="js/request.js"></script>
+		<script src="js/jsencrypt.min.js"></script>
+	</head>
+	<body>
+		<div id="app" class="forward-url" v-cloak>
+			<div class="no-page" v-show="isNoPage">
+			  <img class="loading-gif" src="img/404.png" alt=""/>
+			</div>
+			<div v-show="pageLoading" class="page-loading">
+			  <img class="loading-gif" src="img/loading.gif" alt="" />
+			  <p class="loading-text" style="color: #666">加载中...</p>
+			</div>
+			<div v-show="!isNoPage && !pageLoading" class="forward-url-main">
+				<div class="flex-center p3">
+				  <h1 class="red-title">{{ orderInfo.channelName }}</h1>
+				  <div v-if="isExpire" class="count-dowm" style="color: coral">订单已过期，请重新下单</div>
+				  <div v-else class="count-dowm">将在后{{countDown.m}}分{{countDown.s}}秒后超时</div>
+				</div>
+				<div class="flex-center p3">
+				  <p>金额：</p>
+				  <b class="red-title">{{ orderInfo.amount }}元</b>
+				</div>
+				<div class="flex-center p3">
+				  <p>订单编号：</p>
+				  <p class="blue-title">{{ orderInfo.traceNo }}</p>
+				</div>
+				<div class="p3">请在<span class="text-red">{{orderInfo.shopPayTimeout}}分钟</span>内完成支付，超时将无法正常到账！！</div>
+
+				<div v-show="orderInfo.jumpUrl === 0">
+				  <button class="taobao-btn" @click="handleTaobao">*点击跳转到淘宝购买（推荐）*</button>
+				  <button class="jd-btn" @click="openJDApp">*点击跳转到京东购买（推荐）*</button>
+				</div>
+				<button v-show="orderInfo.jumpUrl === 1" class="taobao-btn" @click="handleTaobao">*点击跳转到淘宝购买（推荐）*</button>
+				<button v-show="orderInfo.jumpUrl === 2" class="jd-btn" @click="openJDApp">*点击跳转到京东购买（推荐）*</button>
+
+				<p class="text-red font-12">注意：请选择面额与下单一致的进行购买，如不一致将不退不补！！！</p>
+
+				<form size="small" ref="form" class="form-card">
+					<div class="form-item">
+						<p class="form-label">可填写/复制粘贴卡密信息进行自动识别</p>
+						<textarea
+						  rows="4" class="textarea"
+						  v-model="form.cardInfo"
+						  placeholder="复制粘贴卡密信息进行自动识别，如：卡号：xxxx,卡密：xxxx"
+						  @change="changeTextarea">
+						</textarea>
+					</div>
+					<div class="form-item" v-if="orderInfo.channelName.indexOf('福惠') > -1 || orderInfo.channelName.indexOf('豪情') > -1 || orderInfo.channelName.indexOf('鸿福') > -1 || orderInfo.channelName.indexOf('鑫旺') > -1">
+					  <p class="form-label form-label_require">请填写卡号（不要带空格哦～）</p>
+						  <input class="form-input" v-model="form.cardNo" placeholder="请输入16位卡号"/>
+					</div>
+					<div class="form-item" v-else-if="orderInfo.channelName.indexOf('星辰') > -1">
+						<p class="form-label form-label_require">请填写卡号（不要带空格哦～）</p>
+						<input class="form-input" v-model="form.cardNo" placeholder="星辰卡 请输入19位卡号"/>
+					</div>
+					<div class="form-item" v-else>
+						<p class="form-label form-label_require">请填写卡号（不要带空格哦～）</p>
+						<input class="form-input" v-model="form.cardNo" placeholder="请输入卡号"/>
+					</div>
+					<div class="form-item" v-if="orderInfo.channelName.indexOf('福惠') > -1 || orderInfo.channelName.indexOf('豪情') > -1 || orderInfo.channelName.indexOf('鸿福') > -1 || orderInfo.channelName.indexOf('鑫旺') > -1">
+						<p class="form-label form-label_require">请填写卡密（不要带空格哦～）</p>
+					  <input class="form-input" v-model="form.cardPassword" placeholder="请输入16位卡密"/>
+					</div>
+					<div class="form-item" v-else-if="orderInfo.channelName.indexOf('星辰') > -1">
+						<p class="form-label form-label_require">请填写卡密（不要带空格哦～）</p>
+						<input class="form-input" v-model="form.cardPassword" placeholder="星辰卡 请输入6位卡密"/>
+					</div>
+					<div class="form-item" v-else>
+						<p class="form-label form-label_require">请填写卡密（不要带空格哦～）</p>
+						<input class="form-input" v-model="form.cardPassword" placeholder="请输入卡密"/>
+					</div>
+				</form>
+
+				<button v-if="isShow" class="submit-btn" type="success" @click="submitCard">提交卡密信息</button>
+
+				<div class="remark">
+					<p>步骤如下</p>
+					<p>
+					  1、打开{{(orderInfo.channelName.indexOf('豪情') > -1 || orderInfo.channelName.indexOf('鸿福') > -1 ) ? '' : '京东商城或'}}淘宝搜索并购买
+						<span class="text-red">"{{ orderInfo.channelName }}{{ orderInfo.amount }}"</span>
+					</p>
+					<p v-show="orderInfo.channelCode === '8054'" style="color: #e60000; font-weight: 700">
+					  重要提醒：购买前咨询卖家，是否为【8688开头的沃尔玛卡密】 其他一律不予回调！
+					</p>
+					<p v-show="orderInfo.channelCode === '8068'" style="color: #e60000; font-weight: 700">
+					  重要提醒：购买前咨询卖家，是否为【2326开头的沃尔玛卡密】 其他一律不予回调！
+					</p>
+					<p>2、按照页面完成支付，获取卡密</p>
+					<p>3、购买完成，请勿绑定京东账号，否则无法到账</p>
+					<p>4、获取卡密，返回页面输入卡号和卡密</p>
+				</div>
+			</div>
+
+			<!--重要提示-->
+			<div class="dialog-div" v-show="isVisible">
+				<div class="dialog-div_body">
+					<h3 class="dialog-title" style="color: red; font-size: 20px">重要提示</h3>
+					<div v-if="!orderInfo.warnNotes || orderInfo.warnNotes === ''">
+						<p class="align-center">
+						  请各位用户注意
+						  <svg t="1728443461595" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8410" width="16" height="16"><path d="M954.395 834.79L553.318 140.106a47.726 47.726 0 0 0-82.66 0L68.782 836.17a47.725 47.725 0 0 0 41.33 71.587h803.773c26.357 0 47.724-21.367 47.724-47.725 0-9.27-2.642-17.92-7.215-25.241z m-401.463-72.67c0 22.606-18.327 40.932-40.933 40.932-22.606 0-40.932-18.326-40.932-40.932v-1.313c0-22.607 18.326-40.933 40.932-40.933s40.933 18.326 40.933 40.933v1.313z m0-149.565c0 22.607-18.326 40.932-40.933 40.932-22.605 0-40.932-18.325-40.932-40.932V394.911c0-22.607 18.327-40.932 40.932-40.932 22.607 0 40.933 18.325 40.933 40.932v217.643z" fill="#FF6600" p-id="8411"></path></svg>
+						  <svg t="1728443461595" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8410" width="16" height="16"><path d="M954.395 834.79L553.318 140.106a47.726 47.726 0 0 0-82.66 0L68.782 836.17a47.725 47.725 0 0 0 41.33 71.587h803.773c26.357 0 47.724-21.367 47.724-47.725 0-9.27-2.642-17.92-7.215-25.241z m-401.463-72.67c0 22.606-18.327 40.932-40.933 40.932-22.606 0-40.932-18.326-40.932-40.932v-1.313c0-22.607 18.326-40.933 40.932-40.933s40.933 18.326 40.933 40.933v1.313z m0-149.565c0 22.607-18.326 40.932-40.933 40.932-22.605 0-40.932-18.325-40.932-40.932V394.911c0-22.607 18.327-40.932 40.932-40.932 22.607 0 40.933 18.325 40.933 40.932v217.643z" fill="#FF6600" p-id="8411"></path></svg>
+						  <svg t="1728443461595" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8410" width="16" height="16"><path d="M954.395 834.79L553.318 140.106a47.726 47.726 0 0 0-82.66 0L68.782 836.17a47.725 47.725 0 0 0 41.33 71.587h803.773c26.357 0 47.724-21.367 47.724-47.725 0-9.27-2.642-17.92-7.215-25.241z m-401.463-72.67c0 22.606-18.327 40.932-40.933 40.932-22.606 0-40.932-18.326-40.932-40.932v-1.313c0-22.607 18.326-40.933 40.932-40.933s40.933 18.326 40.933 40.933v1.313z m0-149.565c0 22.607-18.326 40.932-40.933 40.932-22.605 0-40.932-18.325-40.932-40.932V394.911c0-22.607 18.327-40.932 40.932-40.932 22.607 0 40.933 18.325 40.933 40.932v217.643z" fill="#FF6600" p-id="8411"></path></svg>
+						</p>
+						<p class="align-center">
+						  1. <svg t="1728443461595" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8410" width="16" height="16"><path d="M954.395 834.79L553.318 140.106a47.726 47.726 0 0 0-82.66 0L68.782 836.17a47.725 47.725 0 0 0 41.33 71.587h803.773c26.357 0 47.724-21.367 47.724-47.725 0-9.27-2.642-17.92-7.215-25.241z m-401.463-72.67c0 22.606-18.327 40.932-40.933 40.932-22.606 0-40.932-18.326-40.932-40.932v-1.313c0-22.607 18.326-40.933 40.932-40.933s40.933 18.326 40.933 40.933v1.313z m0-149.565c0 22.607-18.326 40.932-40.933 40.932-22.605 0-40.932-18.325-40.932-40.932V394.911c0-22.607 18.327-40.932 40.932-40.932 22.607 0 40.933 18.325 40.933 40.932v217.643z" fill="#FF6600" p-id="8411"></path></svg>
+						  按照页面完成支付，获取卡密；
+						</p>
+						<p class="align-center">
+						  2. <svg t="1728443461595" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8410" width="16" height="16"><path d="M954.395 834.79L553.318 140.106a47.726 47.726 0 0 0-82.66 0L68.782 836.17a47.725 47.725 0 0 0 41.33 71.587h803.773c26.357 0 47.724-21.367 47.724-47.725 0-9.27-2.642-17.92-7.215-25.241z m-401.463-72.67c0 22.606-18.327 40.932-40.933 40.932-22.606 0-40.932-18.326-40.932-40.932v-1.313c0-22.607 18.326-40.933 40.932-40.933s40.933 18.326 40.933 40.933v1.313z m0-149.565c0 22.607-18.326 40.932-40.933 40.932-22.605 0-40.932-18.325-40.932-40.932V394.911c0-22.607 18.327-40.932 40.932-40.932 22.607 0 40.933 18.325 40.933 40.932v217.643z" fill="#FF6600" p-id="8411"></path></svg>
+						  购买完成，请勿绑定京东账号，否则无法到账。
+						</p>
+					</div>
+					<div v-else v-html="orderInfo.warnNotes" style="font-size: 20px"></div>
+					<div v-show="orderInfo.channelName.indexOf('福惠卡') > -1" style="width: 100%; height: 92px; margin: 8px auto;">
+					  <img style="display: block; width: 100%; height: 100%; margin: auto" src="img/fhk.jpg" alt="" />
+					</div>
+					<div v-show="orderInfo.channelName.indexOf('鸿福卡') > -1" style="width: 100%; height: 92px; margin: 8px auto;">
+					  <img style="display: block; width: 100%; height: 100%; margin: auto" src="img/hfk.png" alt="" />
+					</div>
+					<div v-show="orderInfo.channelName.indexOf('鑫旺卡') > -1" style="width: 100%; height: 92px; margin: 8px auto;">
+						<img style="display: block; width: 100%; height: 100%; margin: auto" src="img/xwk.jpg" alt="" />
+					</div>
+					<div class="dialog-footer">
+					  <button class="primary-button" @click="closeDialog">确定</button>
+					</div>
+				</div>
+			</div>
+
+			<!--二次确认提示-->
+			<div class="dialog-div" v-show="isTwoModal">
+				<div class="dialog-div_body">
+					<div style="font-size: 16px; color: #333">
+						<p>请认准<b style="font-size: 18px; color: #f00">不溢价</b>和<b style="font-size: 18px; color: #f00">包邮</b>的店铺购买！</p>
+						<p>溢价和不包邮的店铺卖的都是假卡！！！</p>
+					</div>
+					<div style="margin-top: 12px">
+						<button style="width: 100%; background: rgb(255 91 41); margin-bottom: 16px; font-size: 15px" class="primary-button" @click="handleTaobaoTwo">认准包邮 不溢价店铺 立即跳转</button>
+						<button style="width: 100%; background: #989595" class="primary-button" @click="isTwoModal = false">关闭</button>
+					</div>
+				</div>
+			</div>
+
+			<!--提交提示-->
+			 <div class="dialog-div" v-show="isMessage">
+			  <div class="dialog-div_body">
+			    <h3 class="dialog-title">温馨提示</h3>
+			    <div class="align-center">
+			      <svg t="1728443461595" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8410" width="16" height="16"><path d="M954.395 834.79L553.318 140.106a47.726 47.726 0 0 0-82.66 0L68.782 836.17a47.725 47.725 0 0 0 41.33 71.587h803.773c26.357 0 47.724-21.367 47.724-47.725 0-9.27-2.642-17.92-7.215-25.241z m-401.463-72.67c0 22.606-18.327 40.932-40.933 40.932-22.606 0-40.932-18.326-40.932-40.932v-1.313c0-22.607 18.326-40.933 40.932-40.933s40.933 18.326 40.933 40.933v1.313z m0-149.565c0 22.607-18.326 40.932-40.933 40.932-22.605 0-40.932-18.325-40.932-40.932V394.911c0-22.607 18.327-40.932 40.932-40.932 22.607 0 40.933 18.325 40.933 40.932v217.643z" fill="#FF6600" p-id="8411"></path></svg>
+			      <svg t="1728443461595" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8410" width="16" height="16"><path d="M954.395 834.79L553.318 140.106a47.726 47.726 0 0 0-82.66 0L68.782 836.17a47.725 47.725 0 0 0 41.33 71.587h803.773c26.357 0 47.724-21.367 47.724-47.725 0-9.27-2.642-17.92-7.215-25.241z m-401.463-72.67c0 22.606-18.327 40.932-40.933 40.932-22.606 0-40.932-18.326-40.932-40.932v-1.313c0-22.607 18.326-40.933 40.932-40.933s40.933 18.326 40.933 40.933v1.313z m0-149.565c0 22.607-18.326 40.932-40.933 40.932-22.605 0-40.932-18.325-40.932-40.932V394.911c0-22.607 18.327-40.932 40.932-40.932 22.607 0 40.933 18.325 40.933 40.932v217.643z" fill="#FF6600" p-id="8411"></path></svg>
+			      <svg t="1728443461595" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="8410" width="16" height="16"><path d="M954.395 834.79L553.318 140.106a47.726 47.726 0 0 0-82.66 0L68.782 836.17a47.725 47.725 0 0 0 41.33 71.587h803.773c26.357 0 47.724-21.367 47.724-47.725 0-9.27-2.642-17.92-7.215-25.241z m-401.463-72.67c0 22.606-18.327 40.932-40.933 40.932-22.606 0-40.932-18.326-40.932-40.932v-1.313c0-22.607 18.326-40.933 40.932-40.933s40.933 18.326 40.933 40.933v1.313z m0-149.565c0 22.607-18.326 40.932-40.933 40.932-22.605 0-40.932-18.325-40.932-40.932V394.911c0-22.607 18.327-40.932 40.932-40.932 22.607 0 40.933 18.325 40.933 40.932v217.643z" fill="#FF6600" p-id="8411"></path></svg>
+						<p class="align-center" v-if="orderInfo.channelName.indexOf('豪情') > -1 || orderInfo.channelName.indexOf('鸿福') > -1 || orderInfo.channelName.indexOf('鑫旺') > -1">
+							提交成功，如充值未到账，请联系游戏客服，不要联系淘宝客服以免造成损失！
+						</p>
+						<p class="align-center" v-else>该订单已经提交，请耐心等待～ </p>
+			    </div>
+			  </div>
+			</div>
+
+			<!--loading-->
+			<div class="dialog-div modal-loading" v-show="loading">
+			  <div>
+			    <img src="img/loading1.gif" alt="">
+			    <p>正在加载中...</p>
+			  </div>
+			</div>
+
+			<!--toast-->
+			<div class="toast" v-show="toastShow">
+			  <p>{{ toastText }}</p>
+			</div>
+
+		</div>
+
+		<!-- <script src="js/sythx002.js"></script> -->
+		 <script src="js/syt.js"></script>
+
+		<script>
+
+			//监听F12、Ctrl+Shift+i、Ctrl+s
+			document.onkeydown = function (event) {
+				if (event.key === "F12") {
+					window.close();
+					window.location = "about:blank";
+				} else if (event.ctrlKey && event.shiftKey && event.key === "I") {//此处I必须大写
+					window.close();
+					window.location = "about:blank";
+				} else if (event.ctrlKey && event.key === "s") {//此处s必须小写
+					event.preventDefault();
+					window.close();
+					window.location = "about:blank";
+				}
+			};
+
+			//监听右键菜单
+			document.oncontextmenu = function () {
+				window.close();
+				window.location = "about:blank";
+			};
+		</script>
+	</body>
+</html>

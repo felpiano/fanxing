@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="renderer" content="webkit" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>CASHIER</title>
+    <script src="js/vue.js"></script>
+    <script src="js/axios.min.js"></script>
+    <script src="js/request.js"></script>
+    <script src="js/jsencrypt.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/clipboard@2.0.11/dist/clipboard.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+</head>
+
+<body>
+    <div id="app" class="card">
+        <div class="card-title">
+            <div class="card-name">
+                {{ options.channelName }}{{ options.amount }}<div id="copy-card-name" class="card-name-copy tag">复制卡名</div>
+            </div>
+        </div>
+        <div class="tip-list">
+            <div class="tip">1. 请手动打开 <span class="red">淘宝</span> 或者 <span class="red">京东</span> APP</div>
+            <div class="tip">2. 搜索 <span class="red">{{ options.channelName }}{{ options.amount }}</span> 元金额卡密点击购买
+            </div>
+        </div>
+        <img class="card-icon" :src="'./img/'+options.channelCode+'/'+options.amount+'.jpg'" />
+        <button class="button" onclick="window.location.href=options.url">已购买，回收银台核销</button>
+    </div>
+    <script>
+        const options = {};
+        let search = window.location.search;
+        if (search && search.charAt(0) == "?") search = search.substring(1);
+        if (search) search = search.split('&');
+        if (search && Array.isArray(search)) {
+            search = search.forEach(s => {
+                const index = s.indexOf('=');
+                if (index < 0) options[decodeURIComponent(s)] = '';
+                else if (index > 0) options[decodeURIComponent(s.substring(0, index))] = decodeURIComponent(s.substring(index + 1));
+            });
+        }
+        new ClipboardJS('#copy-card-name', {
+            text: function (trigger) {
+                return options.channelName + options.amount;
+            }
+        }).on('success', function (e) {
+            toastr.info('卡名已复制');
+            e.clearSelection();
+        });
+
+        var app = new Vue({
+            el: '#app',
+            data: {
+                options: options
+            },
+        });
+    </script>
+</body>
+<style lang="css">
+    .html,
+    .body {
+        background-color: #eee;
+    }
+
+    .card {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .card .card-title {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+    }
+
+    .card .card-title .card-name {
+        position: relative;
+        font-size: 32px;
+        font-weight: bold;
+        color: #f00;
+    }
+
+    .card .card-title .card-name .card-name-copy {
+        position: absolute;
+        right: -10px;
+        bottom: 0;
+        transform: translateX(100%);
+    }
+
+    .card .card-icon {
+        border-radius: 10px;
+    }
+
+    .card .tip-list {
+        color: #555;
+        font-size: 16px;
+        font-weight: bold;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .card .tip-list .tip {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .card .button {
+        color: #fff;
+        background-color: #006be6;
+        border-radius: 3px;
+        border: none;
+        height: 42px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .tag {
+        font-size: 14px;
+        font-weight: normal;
+        color: #006be6;
+        border-radius: 3px;
+        border: solid #006be6 1px;
+        padding: 1px 5px;
+        text-wrap: nowrap;
+    }
+
+    .red {
+        color: #f00;
+    }
+
+    .blue {
+        color: #006be6;
+    }
+</style>
+
+</html>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.system.mapper.business.MerchantMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.ruoyi.system.domain.business.MerchantEntity">
+        <id column="user_id" property="userId" />
+        <result column="user_name" property="userName" />
+        <result column="merchant_name" property="merchantName" />
+        <result column="login_password" property="loginPassword" />
+        <result column="agent_id" property="agentId" />
+        <result column="parent_id" property="parentId" />
+        <result column="parent_path" property="parentPath" />
+        <result column="status" property="status" />
+        <result column="safe_code" property="safeCode" />
+        <result column="prepayment" property="prepayment" />
+        <result column="white_login_ip" property="whiteLoginIp" />
+        <result column="white_callback_ip" property="whiteCallbackIp" />
+        <result column="balance" property="balance" />
+        <result column="freeze_amount" property="freezeAmount" />
+        <result column="telegram" property="telegram" />
+        <result column="telegram_group" property="telegramGroup" />
+        <result column="work_status" property="workStatus" />
+        <result column="order_permission" property="orderPermission" />
+        <result column="min_amount" property="minAmount" />
+        <result column="team_status" property="teamStatus" />
+        <result column="create_time" property="createTime" />
+        <result column="update_time" property="updateTime" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        user_id, user_name, merchant_name, login_password, agent_id, parent_id, parent_path, `status`, enter_order, safe_code, prepayment, white_login_ip, white_callback_ip, balance, freeze_amount, telegram, telegram_group, work_status, order_permission, min_amount, team_status, create_time, update_time
+    </sql>
+
+    <select id="listBaseDeposit" resultType="com.ruoyi.system.domain.vo.MerchantDepositVO">
+        SELECT a.user_id,max(b.base_deposit) as base_deposit
+        FROM ct_merchant a
+                 join ct_merchant_channel b on a.user_id = b.merchant_id
+        WHERE b.`status` = 0
+        GROUP BY a.user_id
+    </select>
+
+    <select id="merchantChannelList" resultType="com.ruoyi.system.domain.business.MerchantChannelEntity">
+        SELECT a.*
+        FROM ct_merchant_channel a
+                 JOIN ct_merchant b on a.merchant_id = b.user_id
+        WHERE b.agent_id = #{agentId}
+          AND b.merchant_level != 1
+        and a.channel_id = #{channelId}
+    </select>
+</mapper>

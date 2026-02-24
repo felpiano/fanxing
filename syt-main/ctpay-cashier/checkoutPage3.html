@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="renderer" content="webkit">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>收银台</title>
+  <script>
+    const randomNum = Math.random().toString(36).substring(7);
+    document.write('<link rel="stylesheet" href="css/index.css?v=' + randomNum + '">');
+    document.write('<link rel="stylesheet" href="css/sytPay3.css?v=' + randomNum + '">');
+  </script>
+  <script src="js/vue.js"></script>
+  <script src="js/axios.min.js"></script>
+  <script src="js/request_03.js"></script>
+  <script src="js/jquery.js"></script>
+</head>
+<body>
+  <div id="app" v-cloak class="syt-pay">
+    <div v-if="orderInfo.orderStatus === -1"></div>
+    <div class="syt-pay-main" v-else-if="orderInfo.orderStatus === 0">
+      <div class="syt-pay-loading">
+        <img src="./images/3.webp" alt=""/>
+      </div>
+      <div class="loading-div">
+        <div class="flex-center count-dowm-div">
+          <div class="count-dowm"><b>{{countDown.s}}s</b></div>
+        </div>
+        <p class="loading-text">正在快速匹配中...</p>
+      </div>
+      <div class="wxts">
+        <p class="text-center">温馨提示</p>
+        <p>1.订单正在匹配中，请耐心等待不要离开页面</p>
+        <p>2.谨记每个订单只能支付一次，切勿重复支付</p>
+        <p>3.如无法支付，请复制链接到其他浏览器进行尝试</p>
+      </div>
+    </div>
+    <div v-else class="order-end">
+      <div class="text-center order-end-icon">
+        <svg t="1743962972544" class="icon" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="2678" width="68" height="68"><path d="M755.2 563.2H505.6V384c0-19.2-19.2-32-38.4-32-12.8-6.4-32 12.8-32 32v217.6c0 6.4 6.4 19.2 12.8 25.6 6.4 6.4 12.8 12.8 25.6 12.8h288c6.4 0 19.2-6.4 25.6-12.8 12.8-12.8 12.8-25.6 6.4-38.4-6.4-19.2-19.2-25.6-38.4-25.6z" fill="#DC575A" p-id="2679"></path><path d="M512 0C230.4 0 0 230.4 0 512s230.4 512 512 512 512-230.4 512-512-230.4-512-512-512z m0 960c-249.6 0-448-198.4-448-448s198.4-448 448-448 448 198.4 448 448-198.4 448-448 448z" fill="#DC575A" p-id="2680"></path></svg>
+      </div>
+      <p class="text-center"> 获取订单信息失败～</p>
+      <p class="text-center">请关闭当前页面, 重新下单即可</p>
+    </div>
+  </div>
+</body>
+<script>
+  new Vue({
+    el: '#app',
+    data() {
+      return {
+        loading: false,
+        orderInfo: {
+          tradeNo: '',
+          fixedAmount: 0,
+          orderStatus: -1
+        },
+        countDown: {
+          m: 0,
+          s: 0
+        },
+        times: 0
+      }
+    },
+    created() {
+      const query = getUrlParam(window.location.href)
+      if (JSON.stringify(query) !== '{}') {
+        this.getOrderInfo(query)
+      } else {
+        this.loading = false
+      }
+    },
+    methods: {
+      getOrderInfo(query) {
+        this.loading = false
+        if (!query.orderNo || !query.time) {
+          return
+        }
+        this.times = Number(query.time)
+        if (this.isExpired(this.times)) {
+          this.orderInfo.orderStatus = 1
+        } else {
+          this.orderInfo.orderStatus = 0
+          this.countDownFun()
+        }
+      },
+      isExpired(time, seconds = 11) {
+        const now = Date.now();
+        return now > time + seconds * 1000;
+      },
+      countDownFun() {
+        // 倒计时
+        let countDownTime = 60 * 1000
+        let timer = setInterval(() => {
+          if (countDownTime <= 0 || this.isExpired(this.times)) {
+            this.orderInfo.orderStatus = 1
+            clearInterval(timer)
+            timer = null
+            this.again()
+            return
+          }
+          this.countDown.m = Math.floor(countDownTime / 1000 / 60)
+          this.countDown.s = Math.floor(countDownTime / 1000 % 60)
+          countDownTime -= 1000
+        }, 1000)
+      },
+      again() {
+        this.countDown = {
+          m: 0,
+          s: 0
+        }
+        this.countDownFun()
+      }
+    }
+  })
+</script>
+</html>
