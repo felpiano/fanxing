@@ -20,10 +20,7 @@ import com.ruoyi.common.utils.SecurityUtils;
 import com.ruoyi.system.domain.business.MerchantChannelEntity;
 import com.ruoyi.system.domain.business.MerchantEntity;
 import com.ruoyi.system.domain.business.MerchantQrcodeEntity;
-import com.ruoyi.system.domain.dto.ChildMerchantChannelDTO;
-import com.ruoyi.system.domain.dto.MerchantChildSaveDTO;
-import com.ruoyi.system.domain.dto.MerchantQrcodeQueryDTO;
-import com.ruoyi.system.domain.dto.MerchantQueryDTO;
+import com.ruoyi.system.domain.dto.*;
 import com.ruoyi.system.domain.vo.MerchantDepositVO;
 import com.ruoyi.system.service.ISysUserService;
 import com.ruoyi.system.service.business.MerchantChannelService;
@@ -38,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -201,6 +199,9 @@ public class MerchantChildController {
                 .eq(ObjectUtil.isNotEmpty(queryDTO.getOrderPermission()), MerchantEntity::getOrderPermission, queryDTO.getOrderPermission())
                 .orderByAsc(MerchantEntity::getWorkStatus,MerchantEntity::getOrderPermission)
                 .orderByDesc(MerchantEntity::getBalance);
+        if(ObjectUtil.isNotEmpty(queryDTO.getMerchantLevel())){
+            queryWrapper.eq(MerchantEntity::getMerchantLevel,Integer.parseInt(queryDTO.getMerchantLevel())+1);
+        }
         Page<MerchantEntity> page = merchantService.page(rowPage, queryWrapper);
         if (page != null && page.getRecords() != null && !page.getRecords().isEmpty()) {
             //获取所有下级码商
@@ -283,6 +284,49 @@ public class MerchantChildController {
             return AjaxResult.error("非法访问");
         }
         merchantChannelService.updateMerchantChannel(BeanUtil.copyProperties(childMerchantChannelDTO, MerchantChannelEntity.class));
+        return AjaxResult.success();
+    }
+
+    @Log(title = "修改码商通道列表", businessType = BusinessType.UPDATE)
+    @ApiOperation("修改码商通道列表")
+    @PreAuthorize("@ss.hasPermi('system:merchantChild:channelUpdate')")
+    @PostMapping("channelUpdateByMerchantLevel")
+    public AjaxResult channelUpdateByMerchantLevel(@RequestBody MerchantChannelByMerchantLevelListDTO merchantLevelListDTO) {
+        if(merchantLevelListDTO.getMerchantLevel()==null){
+            return AjaxResult.error("码商层级不能为空");
+        }
+
+        if(merchantLevelListDTO.getMerchantLevel() <=0){
+            return AjaxResult.error("码商层级要大于0");
+        }
+
+        LoginUser securityUser = SecurityUtils.getLoginUser();
+        MerchantEntity self = merchantService.getById(securityUser.getUser().getUserId());
+        LambdaQueryWrapper<MerchantEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.likeRight(MerchantEntity::getParentPath, self.getParentPath())
+                .eq(MerchantEntity::getMerchantLevel,merchantLevelListDTO.getMerchantLevel()+1)
+                .ne(MerchantEntity::getUserId, self.getUserId());
+
+        // 获取指定层级的子级数据
+        List<MerchantEntity> merchantList = merchantService.list(queryWrapper);
+        List<MerchantChannelEntity> merchantChannels = new ArrayList<>();
+        ChildMerchantChannelDTO channelDTO = merchantLevelListDTO.getChildMerchantChannelDTO();
+        if(!merchantList.isEmpty()){
+            LambdaQueryWrapper<MerchantChannelEntity> queryWrapperMerchantChannel = new LambdaQueryWrapper<>();
+            queryWrapperMerchantChannel.
+                    eq(MerchantChannelEntity::getChannelId,channelDTO.getChannelId())
+                    .in(MerchantChannelEntity::getMerchantId,merchantList.stream().map(MerchantEntity::getUserId).collect(Collectors.toList()))
+            ;
+
+            merchantChannels = merchantChannelService.list(queryWrapperMerchantChannel);
+
+        }
+
+        if(merchantList.isEmpty() || merchantChannels.isEmpty()){
+            return AjaxResult.error("当前层级码商没有数据");
+        }
+        merchantChannelService.updateMerchantChannelList(merchantChannels,merchantLevelListDTO.getMerchantLevel()+1,channelDTO.getChannelRate());
+
         return AjaxResult.success();
     }
 

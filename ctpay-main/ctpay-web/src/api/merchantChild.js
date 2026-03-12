@@ -63,6 +63,14 @@ export function channelUpdate(data) {
   })
 }
 
+export function channelUpdateByMerchantLevel(data) {
+  return request({
+    url: '/merchantChild/channelUpdateByMerchantLevel',
+    method: 'post',
+    data: data
+  })
+}
+
 // 删除码商
 export function deleteMerchantChild(query) {
   return request({

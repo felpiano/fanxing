@@ -194,6 +194,16 @@ export function trimFreezeToBalance(query) {
   })
 }
 
+
+// 余额转其他码商
+export function trimBalanceToMerchant(query) {
+  return request({
+    url: '/merchantEntity/trimBalanceToMerchant',
+    method: 'get',
+    params: query
+  })
+}
+
 // 解绑码商tg群组
 export function unBindMTelegramGroup(query) {
   return request({

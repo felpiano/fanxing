@@ -485,6 +485,8 @@ export default {
         this.$refs.updateAmount.openDialog(row, type)
       }
     },
+
+  
     // 查看上级码商
     lookAllParent(row) {
       this.$refs.allParentRef.openDialog({

@@ -664,4 +664,80 @@ public class MerchantServiceImp extends ServiceImpl<MerchantMapper, MerchantEnti
             }
         }
     }
+
+    @Override
+    public void updateAmountToMerchant(MerchantEntity merchantUserEntity, MerchantEntity merchantEntity, BigDecimal changeAmount, String remark) {
+        String balanceUserKey = RedisKeys.merchantBalance + merchantUserEntity.getUserId();
+        BigDecimal commission = new BigDecimal(redisUtils.get(balanceUserKey));
+        if (commission.compareTo(changeAmount) < 0) {
+            throw new ServiceException("转移金额超过余额");
+        }
+        boolean balanceUserFlag = redisUtils.payMonery(balanceUserKey, changeAmount.toString());
+        if (balanceUserFlag) {
+            try{
+                //创建并保存余额资金记录
+                BigDecimal afterBalance = new BigDecimal(redisUtils.get(balanceUserKey));
+                BigDecimal beforeBalance = afterBalance.add(changeAmount);
+                MerchantAmountRecordsEntity recodes = MerchantAmountRecordsEntity.builder()
+                        .userId(merchantUserEntity.getUserId())
+                        .userName(merchantUserEntity.getUserName())
+                        .beforeAmount(beforeBalance)
+                        .afterAmount(afterBalance)
+                        .changeAmount(changeAmount)
+                        .amountType(1)//余额
+                        .changeType(3)//人工
+                        .createTime(new Date())
+                        .agentId(merchantUserEntity.getAgentId())
+                        .remarks(remark)
+                        .notes(SecurityUtils.getUsername() + "将余额"+changeAmount+"转移给"+merchantEntity.getMerchantName())
+                        .build();
+                merchantAmountRecordsService.save(recodes);
+
+                //保存至数据库
+                merchantUserEntity.setBalance(afterBalance);
+                baseMapper.updateById(merchantUserEntity);
+            }catch (Exception e){
+                e.printStackTrace();
+                //异常时将佣金加回来，将余额减回来
+                redisUtils.addMonery(balanceUserKey, changeAmount.toString());
+                log.error("转移积分失败：{}", e.getMessage());
+                throw new ServiceException("转移积分失败");
+            }
+        }
+
+        String balanceKey = RedisKeys.merchantBalance + merchantEntity.getUserId();
+        boolean balanceFlag = redisUtils.addMonery(balanceKey, changeAmount.toString());
+        if (balanceFlag) {
+            try{
+                //创建并保存余额资金记录
+                BigDecimal afterBalance = new BigDecimal(redisUtils.get(balanceUserKey));
+                BigDecimal beforeBalance = afterBalance.subtract(changeAmount);
+                MerchantAmountRecordsEntity recodes = MerchantAmountRecordsEntity.builder()
+                        .userId(merchantEntity.getUserId())
+                        .userName(merchantEntity.getUserName())
+                        .beforeAmount(beforeBalance)
+                        .afterAmount(afterBalance)
+                        .changeAmount(changeAmount)
+                        .amountType(1)//余额
+                        .changeType(3)//人工
+                        .createTime(new Date())
+                        .agentId(merchantEntity.getAgentId())
+                        .remarks(remark)
+                        .notes( merchantEntity.getMerchantName()+ "获得"+SecurityUtils.getUsername()+"转移的余额"+changeAmount)
+                        .build();
+                merchantAmountRecordsService.save(recodes);
+
+                //保存至数据库
+                merchantEntity.setBalance(afterBalance);
+                baseMapper.updateById(merchantEntity);
+            }catch (Exception e){
+                e.printStackTrace();
+                //异常时将佣金加回来，将余额减回来
+                redisUtils.payMonery(balanceUserKey, changeAmount.toString());
+                log.error("转移积分失败：{}", e.getMessage());
+                throw new ServiceException("转移积分失败");
+            }
+        }
+
+    }
 }

@@ -185,6 +185,123 @@ public class MerchantChannelServiceImp extends ServiceImpl<MerchantChannelMapper
         asyncRedisService.asyncReportQrcode();
     }
 
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateMerchantChannelList(List<MerchantChannelEntity> list, Integer currLevel, BigDecimal channelRate) {
+        if (list == null || list.isEmpty()) {
+            throw new ServiceException("参数不能为空");
+        }
+        Long channelId = list.get(0).getChannelId();
+        List<Long> merchantIds = list.stream().map(MerchantChannelEntity::getMerchantId).collect(Collectors.toList());
+        Set<Long> merchantIdSet = new HashSet<>(merchantIds);
+
+
+        // ===== 通过parentPath查找所有下级码商（不含自己） =====
+        List<MerchantEntity> descendantList = queryByParentIds(merchantIds);
+        Set<Long> descendantIds = descendantList.stream()
+                .map(MerchantEntity::getUserId)
+                .filter(id -> !merchantIdSet.contains(id))
+                .collect(Collectors.toSet());
+        Map<Long, String> merchantLevelMap = descendantList.stream()
+                .collect(Collectors.toMap(
+                        MerchantEntity::getUserId,                      // key: name
+                        descendant -> String.valueOf(descendant.getMerchantLevel()),
+                        (oldValue, newValue) -> newValue
+                ));
+
+        // ===== 批量更新 =====
+        List<MerchantChannelEntity> allMerchantChannels = new ArrayList<>();
+
+        // 1. 更新input码商: channelRate + merchantRate[currLevel]
+        list.forEach(inputChannel -> {
+            setRateByLevel(inputChannel, currLevel, channelRate);
+            inputChannel.setChannelRate(channelRate);
+            allMerchantChannels.add(inputChannel);
+        });
+
+        // 2. 更新所有下级码商: 只修改 merchantRate[currLevel]
+        if (!descendantIds.isEmpty()) {
+            List<MerchantChannelEntity> descendantChannelRecords = this.list(
+                    Wrappers.lambdaQuery(MerchantChannelEntity.class)
+                            .eq(MerchantChannelEntity::getChannelId, channelId)
+                            .in(MerchantChannelEntity::getMerchantId, descendantIds));
+            descendantChannelRecords.forEach(data -> {
+                String merchantLevel = merchantLevelMap.get(data.getMerchantId());
+                setRateByLevel(data, Integer.parseInt(merchantLevel), channelRate);
+            });
+            allMerchantChannels.addAll(descendantChannelRecords);
+        }
+
+        this.updateBatchById(allMerchantChannels);
+        // 刷新Redis缓存
+        List<MerchantDepositVO> merchantDeposits = merchantMapper.listBaseDeposit();
+        if (merchantDeposits != null && !merchantDeposits.isEmpty()) {
+            redisUtils.set(RedisKeys.merchantDeposit, JSONUtil.toJsonStr(merchantDeposits));
+        }
+        asyncRedisService.asyncReportQrcode();
+    }
+
+    public List<MerchantEntity> queryByParentIds(List<Long> parentIds) {
+        if (parentIds == null || parentIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        LambdaQueryWrapper<MerchantEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.and(wrapper -> {
+            boolean first = true;
+            for (Long id : parentIds) {
+                // 中间/末尾匹配: parentPath 包含 /id/
+                String patternMiddle = "/" + id + "/";
+                // 开头匹配: parentPath 以 id/ 开头（针对第一层级码商）
+                String patternStart = id + "/";
+                if (first) {
+                    wrapper.like(MerchantEntity::getParentPath, patternMiddle)
+                            .or().likeRight(MerchantEntity::getParentPath, patternStart);
+                    first = false;
+                } else {
+                    wrapper.or().like(MerchantEntity::getParentPath, patternMiddle)
+                            .or().likeRight(MerchantEntity::getParentPath, patternStart);
+                }
+            }
+        });
+
+        return merchantMapper.selectList(queryWrapper);
+    }
+
+    /**
+     * 根据层级获取对应的费率字段值
+     * level 0 → channelRate
+     * level 1 → merchantRateOne
+     * level 2 → merchantRateTwo
+     * ...
+     */
+    private BigDecimal getRateByLevel(MerchantChannelEntity channel, int level) {
+        switch (level) {
+            case 0: return channel.getChannelRate();
+            case 1: return channel.getMerchantRateOne();
+            case 2: return channel.getMerchantRateTwo();
+            case 3: return channel.getMerchantRateThree();
+            case 4: return channel.getMerchantRateFour();
+            case 5: return channel.getMerchantRateFive();
+            default: return null;
+        }
+    }
+
+    /**
+     * 根据层级设置对应的费率字段值
+     */
+    private void setRateByLevel(MerchantChannelEntity channel, int level, BigDecimal rate) {
+        switch (level) {
+            case 1: channel.setMerchantRateOne(rate); break;
+            case 2: channel.setMerchantRateTwo(rate); break;
+            case 3: channel.setMerchantRateThree(rate); break;
+            case 4: channel.setMerchantRateFour(rate); break;
+            case 5: channel.setMerchantRateFive(rate); break;
+            default: break;
+        }
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void agentContrl(Long merchantId, Long channelId, Integer agentContrl) {

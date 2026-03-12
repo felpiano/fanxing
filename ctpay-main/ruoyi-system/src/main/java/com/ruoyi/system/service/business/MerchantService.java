@@ -96,4 +96,13 @@ public interface MerchantService extends IService<MerchantEntity> {
      * @param tradeNo
      */
     void subMerchantCommission(String tradeNo);
+
+    /**
+     *  把余额转给其他码商
+     * @param merchantUserEntity  当前登录用户实体类
+     * @param merchantEntity 转移码商信息
+     * @param changeAmount 改变金额
+     * @param remark 备注
+     */
+    void updateAmountToMerchant(MerchantEntity merchantUserEntity, MerchantEntity merchantEntity, BigDecimal changeAmount, String remark);
 }

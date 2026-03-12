@@ -20,6 +20,10 @@
               type="primary" size="mini" @click="handleAddMerchant">
               <i class="el-icon-plus"></i>添加
             </el-button>
+              <el-button 
+              type="primary" size="mini" @click="handleBatchRate">
+              设置层级费率
+            </el-button>
             <el-button v-hasPermi="['system:merchantChild:onkeyOff']"
               type="success" size="mini" @click="handleStopOrder(0)">
               <i class="el-icon-video-pause"></i>开启下级接单
@@ -115,6 +119,10 @@
       <!--费率-->
       <basicConfigRate ref="basicConfigRate" @refresh="getList"></basicConfigRate>
 
+       <!--批量设置码商费率-->
+      <basicConfigRateList ref="basicConfigRateList" @refresh="getList"></basicConfigRateList>
+
+
       <!--编辑-->
       <updateMerchant ref="updateMerchant" @refresh="getList"></updateMerchant>
 
@@ -125,6 +133,7 @@
 import addMerchant from './components/addMerchant'
 import transferBalance from './components/transferBalance'
 import basicConfigRate from './components/basicConfigRate.vue'
+import basicConfigRateList from './components/basicConfigRateList.vue'
 import updateMerchant from './components/updateMerchant'
 import { getMerchantChildAllList, updateMerchantChild, deleteMerchantChild, onkeyOff } from '@/api/merchantChild'
 import { getMerchantaAll } from '@/api/merchant'
@@ -134,7 +143,8 @@ export default {
     addMerchant,
     transferBalance,
     basicConfigRate,
-    updateMerchant
+    updateMerchant,
+    basicConfigRateList
   },
   data() {
     return {
@@ -169,11 +179,10 @@ export default {
           ]
         },
         {
-          type: 'select',
-          model: 'parentPath',
+          type: 'input',
+          model: 'merchantLevel',
           filterable: true,
           title: '码商层级',
-          placeholder: '请选择码商',
           clearable: true,
           option: []
         }
@@ -184,7 +193,8 @@ export default {
           userName: '',
           status: '',
           orderPermission: '',
-          parentPath: ''
+          parentPath: '',
+          merchantLevel:''
         },
         data: [],
         columns: [
@@ -364,6 +374,21 @@ export default {
     // 费率
     handleRate(row) {
       this.$refs.basicConfigRate.openDialog(row)
+    },
+
+      // 批量设置费率
+    handleBatchRate(row) {
+      let merchantLevel = this.tableConfig.searchQuery.merchantLevel
+      if(merchantLevel==""|| merchantLevel==undefined){
+        this.$message.error("请先输入码商层级")
+        return
+      }
+       if(merchantLevel <=0){
+        this.$message.error("码商层级要大于0")
+        return
+      }
+      console.log("merchantLevel",this.tableConfig.searchQuery.merchantLevel)
+      this.$refs.basicConfigRateList.openDialog(row,(Number(this.tableConfig.searchQuery.merchantLevel)))
     },
     // 编辑
     handleEditor(row) {

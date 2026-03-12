@@ -38,6 +38,11 @@
       </template>
       <template v-slot:jindanBalance="{ row }">
         <p class="text-center">{{ (row.balance - row.baseDeposit).toFixed(2) || 0 }}</p>
+        <el-button
+          type="success" class="min-button"
+            @click="handleUpdateAmountToMerchant(row)">
+           余额转码商
+        </el-button>
       </template>
       <template v-slot:freezeAmount="{ row }">
         <p class="text-center">{{ row.freezeAmount || 0 }}</p>
@@ -47,6 +52,9 @@
             @click="handleUpdateAmount(row)">
             转余额
         </el-button>
+      </template>
+      <template v-slot:balance="{ row }">
+        <p class="text-center">{{ row.balance || 0 }}</p>
       </template>
     </km-table>
 
@@ -75,6 +83,11 @@
     <!--佣金转余额---->
     <update-freeze-amount ref="updateFreezeAmountRef" @refresh="getList"></update-freeze-amount>
 
+
+     <!--码商余额转他人-->
+    <change-amount-to-merchant ref="changeAmountToMerchantRef" @refresh="getList"></change-amount-to-merchant>
+
+
  </div>
 </template>
 
@@ -83,9 +96,11 @@ import {getMerchantDetail, stopWrokByMerchant} from '@/api/merchant';
 import {updateUserPwd} from "@/api/system/user";
 import updateSafe from '@/views/components/updateSafe.vue';
 import updateFreezeAmount from '@/views/merchant/components/updateFreezeAmount.vue';
+import ChangeAmountToMerchant from '@/views/merchant/components/changeAmountToMerchant.vue';
+
 
 export default {
-  components: { updateSafe, updateFreezeAmount },
+  components: { updateSafe, updateFreezeAmount,ChangeAmountToMerchant },
   name: "merchantAccountList",
   data(vm) {
     return {
@@ -105,6 +120,7 @@ export default {
           {
             value: 'balance',
             label: '余额(元)',
+            slot: 'balance',
             align: 'center'
           },
           {
@@ -189,6 +205,10 @@ export default {
       }).finally(() => {
         this.tableConfig.loading = false
       })
+    },
+      // 把自己的余额给其他码商
+    handleUpdateAmountToMerchant(row, type) {
+        this.$refs.changeAmountToMerchantRef.openDialog(row)
     },
     // 修改状态
     changeStatus(e) {

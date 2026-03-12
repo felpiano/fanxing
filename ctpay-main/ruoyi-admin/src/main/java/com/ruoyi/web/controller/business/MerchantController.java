@@ -694,6 +694,57 @@ public class MerchantController extends BaseController {
         return AjaxResult.success();
     }
 
+
+    @Log(title = "转移余额给其他码商", businessType = BusinessType.UPDATE)
+    @ApiOperation("转移余额给其他码商")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name = "userId", value = "码商id", required = true),
+            @ApiImplicitParam(name = "changeAmount", value = "变更金额", required = true),
+    })
+    @GetMapping("trimBalanceToMerchant")
+    public AjaxResult updateAmountToMerchant(@Param("userId") Long userId, @Param("changeAmount") BigDecimal changeAmount, @RequestParam(value = "remark", required = false) String remark, @RequestParam("code") String code) {
+        Long merchantId = SecurityUtils.getUserId();
+        if(userId.equals(SecurityUtils.getUserId())){
+            return AjaxResult.error("不能转余额给自己");
+        }
+        try {
+            MerchantEntity merchantUserEntity = merchantService.getById(merchantId);
+
+            // 不能同时操作多笔
+            boolean lockFlag = redisLock.getLock(RedisKeys.merchantBalanceLocked + merchantId, "1");
+            if (lockFlag) {
+                MerchantEntity merchantEntity = merchantService.getById(userId);
+                if (merchantEntity == null) {
+                    return AjaxResult.error("选择的码商不存在");
+                }
+
+                try {
+                    Integer googleNumber = Integer.parseInt(code);
+                } catch (NumberFormatException e) {
+                    return AjaxResult.error("验证码错误");
+                }
+                //判断谷歌验证码是否正确
+                GoogleAuthenticator googleAuthenticator = new GoogleAuthenticator();
+                googleAuthenticator.setWindowSize(5);
+                SysUser sysUser = SecurityUtils.getLoginUser().getUser();
+                if (!googleAuthenticator.check_code(sysUser.getGoogleSecret(), Integer.parseInt(code), System.currentTimeMillis())) {
+                    return AjaxResult.error("验证码错误");
+                }
+                if (changeAmount.compareTo(BigDecimal.ZERO) < 0) {
+                    return AjaxResult.error("转移金额不能为负数");
+                }
+                merchantService.updateAmountToMerchant(merchantUserEntity,merchantEntity,changeAmount,remark);
+            } else {
+                return AjaxResult.error("请勿重复操作");
+            }
+        } catch (ServiceException e) {
+            return AjaxResult.error(e.getMessage());
+        } finally {
+            redisLock.releaseLock(RedisKeys.merchantBalanceLocked + merchantId, "1");
+        }
+        return AjaxResult.success();
+    }
+
     @Log(title = "解绑码商tg群组", businessType = BusinessType.UPDATE)
     @ApiOperation("解绑码商tg群组")
     @PreAuthorize("@ss.hasPermi('system:merchant:bindTg')")

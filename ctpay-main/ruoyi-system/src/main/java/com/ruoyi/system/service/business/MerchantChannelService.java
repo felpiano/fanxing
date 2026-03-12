@@ -4,6 +4,7 @@ import com.ruoyi.system.domain.business.MerchantChannelEntity;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.ruoyi.system.domain.business.MerchantEntity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -31,6 +32,16 @@ public interface MerchantChannelService extends IService<MerchantChannelEntity> 
      * @param merchantChannel
      */
     void updateMerchantChannel(MerchantChannelEntity merchantChannel);
+
+    /**
+     * 批量修改码商费率（同一通道，多个同级别码商）
+     * 校验：费率不能超过父级（取父级对应层级费率最小值），
+     *       费率不能低于下级码商（取子级对应层级费率最大值）
+     * @param list 码商通道列表（同一通道，不同码商）
+     * @param currLevel 码商层级，如2代表入参都是二级码商
+     * @param channelRate 要设置的费率
+     */
+    void updateMerchantChannelList(List<MerchantChannelEntity> list, Integer currLevel, BigDecimal channelRate);
 
     /**
      * 关闭一级码商及其下级的通道
